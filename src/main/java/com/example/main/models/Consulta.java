@@ -1,4 +1,4 @@
-package com.example.main.models;
+	package com.example.main.models;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -46,8 +46,24 @@ public class Consulta {
 		this.listaEspera = listaEspera;
 	}
 	
+	public Consulta(
+			int idConsulta,
+			Perfil medicoConsulta,
+			Perfil pacienteConsulta,
+			StatusConsulta statusConsulta,
+			LocalDateTime dataHoraInicioConsulta,
+			LocalDateTime dataHoraFimConsulta,
+			HashSet<ListaEspera> listaEspera
+	) {
+		this.idConsulta = idConsulta;
+		this.medicoConsulta = medicoConsulta;
+		this.pacienteConsulta = pacienteConsulta;
+		this.statusConsulta = statusConsulta;
+		this.dataHoraInicioConsulta = dataHoraInicioConsulta;
+		this.dataHoraFimConsulta = dataHoraFimConsulta;
+		this.listaEspera = listaEspera;
+	}
 	
-
 	public HashSet<ListaEspera> getListaEspera() {
 		return listaEspera;
 	}
@@ -102,8 +118,5 @@ public class Consulta {
 
 	public void setDataHoraFimConsulta(LocalDateTime dataHoraFimConsulta) {
 		this.dataHoraFimConsulta = dataHoraFimConsulta;
-	}
-	
-	
-	
+	}	
 }

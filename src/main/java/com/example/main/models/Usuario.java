@@ -43,6 +43,32 @@ public class Usuario {
 		this.admUsuario = admUsuario;
 		this.crmUsuario = crmUsuario;
 	}
+	
+	public Usuario(
+			int	idUsuario,
+			String nomeUsuario,
+			String sobrenomeUsuario,
+			LocalDateTime dataNascimentoUsuario,
+			String cpfUsuario,
+			String emailUsuario,
+			String senhaUsuario,
+			StatusUsuario statusUsuario,
+			Sexo sexoUsuario,
+			boolean admUsuario,
+			String crmUsuario
+	) {
+		this.idUsuario = idUsuario;
+		this.nomeUsuario = nomeUsuario;
+		this.sobrenomeUsuario = sobrenomeUsuario;
+		this.dataNascimentoUsuario = dataNascimentoUsuario;
+		this.cpfUsuario = cpfUsuario;
+		this.emailUsuario = emailUsuario;
+		this.senhaUsuario = senhaUsuario;
+		this.statusUsuario = statusUsuario;
+		this.sexoUsuario = sexoUsuario;
+		this.admUsuario = admUsuario;
+		this.crmUsuario = crmUsuario;
+	}
 
 	// Getters e Setters
 	public int getIdUsuario() {

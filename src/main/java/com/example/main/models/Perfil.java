@@ -12,11 +12,22 @@ public class Perfil {
 	
 	public Perfil() {}
 	
+	public Perfil(TipoPerfil tipoPerfil) {
+		this.tipoPerfil = tipoPerfil;		
+	}
+	
 	public Perfil(TipoPerfil tipoPerfil, Usuario usuario) {
 		this.tipoPerfil = tipoPerfil;
 		this.usuario = usuario;
 	}
 	public Perfil(TipoPerfil tipoPerfil, Usuario usuario, HashSet<Especialidade> especialidadesMedico) {
+		this.tipoPerfil = tipoPerfil;
+		this.usuario = usuario;
+		this.especialidadesMedico = especialidadesMedico;
+	}
+	
+	public Perfil(int idPerfil, TipoPerfil tipoPerfil, Usuario usuario, HashSet<Especialidade> especialidadesMedico) {
+		this.idPerfil = idPerfil;
 		this.tipoPerfil = tipoPerfil;
 		this.usuario = usuario;
 		this.especialidadesMedico = especialidadesMedico;
