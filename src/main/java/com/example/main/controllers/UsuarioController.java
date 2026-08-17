@@ -18,28 +18,44 @@ public class UsuarioController extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		atualizarUsuario(request, response);
+		// O método agora retorna true se salvou, ou false se deu erro
+		boolean sucesso = atualizarUsuario(request, response);
+		
+		if (sucesso) {
+			// Agora sim! Ele redireciona para a home com a flag de mensagem
+			response.sendRedirect("home?atualizado=true");
+		} else {
+			// Se der erro, ele devolve para a tela de perfil
+			response.sendRedirect("editar-perfil?erro=falha_atualizar");
+		}
 	}
 	
-	public static void atualizarUsuario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	public static boolean atualizarUsuario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HttpSession session = request.getSession();
 		Perfil perfil = (Perfil) session.getAttribute("usuarioLogado");
-		System.out.println("Bateu?");
+		System.out.println("Processando atualização de usuário...");
+		
 		try {
 			Usuario usuarioAtualizado = removerUsuarioPerfil(perfil);
 			usuarioAtualizado.setNomeUsuario(request.getParameter("nome_usuario"));
 			usuarioAtualizado.setSobrenomeUsuario(request.getParameter("sobrenome_usuario"));
 			usuarioAtualizado.setEmailUsuario(request.getParameter("email_usuario"));
+			
 			int responseBD = UsuarioDAO.putUsuarioById(usuarioAtualizado);
+			
 			if (responseBD != 0) {
 				perfil.setUsuario(usuarioAtualizado);
-				session.setAttribute("usuariAtualizado", perfil);
-				request.getRequestDispatcher("editar-perfil.jsp").forward(request, response);
+				
+				// CORREÇÃO: O nome da sessão TEM que ser 'usuarioLogado' para o cabeçalho atualizar na hora!
+				session.setAttribute("usuarioLogado", perfil);
+				
+				return true; // Sucesso!
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
+		return false; // Falha!
 	}
 	
 	public static Usuario removerUsuarioPerfil(Perfil p) throws Exception {

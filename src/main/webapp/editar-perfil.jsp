@@ -5,7 +5,7 @@
 <%
     Perfil usuarioLogado = (Perfil) session.getAttribute("usuarioLogado");
     if (usuarioLogado == null) {
-        response.sendRedirect("index.html");
+        response.sendRedirect("index.jsp");
         return;
     }
 
@@ -21,10 +21,11 @@
         dataNascimento = usr.getDataNascimentoUsuario().format(formatter);
     }
 
-    // Gerando as iniciais para o Avatar Central
     String inicialNome = !nome.isEmpty() ? nome.substring(0, 1).toUpperCase() : "U";
     String inicialSobrenome = !sobrenome.isEmpty() ? sobrenome.substring(0, 1).toUpperCase() : "";
     String iniciais = inicialNome + inicialSobrenome;
+    
+    String erro = request.getParameter("erro");
 %>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -32,29 +33,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CliniFlow - Perfil</title>
-    <!-- CSS Padrão da Aplicação -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Estilos específicos para a tela de Perfil */
-        .header-clean { padding: 32px 40px 0 40px; display: flex; justify-content: space-between; align-items: center; }
-        .header-clean h2 { font-size: 24px; color: #2D3748; display: flex; align-items: center; gap: 12px; }
-        .header-clean h2 i { color: #12A388; cursor: pointer; }
+        /* =========================================================================
+           RECORTAR E COLAR NO SEU STYLE.CSS (Depois dê um Ctrl+F5 no navegador)
+           ========================================================================= */
+        body.home-body, .dashboard-layout { height: 100vh; overflow: hidden; margin: 0; }
+        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #FFFFFF; }
+        
+        .header-clean { flex-shrink: 0; padding: 32px 40px 0 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header-clean h2 { font-size: 24px; color: #2D3748; margin: 0; }
+
+        .scroll-area-perfil { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 40px; }
+        .scroll-area-perfil::-webkit-scrollbar { width: 6px; }
+        .scroll-area-perfil::-webkit-scrollbar-thumb { background-color: #CBD5E0; border-radius: 4px; }
 
         .perfil-container {
             max-width: 440px;
             width: 100%;
-            margin: 10px auto 40px auto;
+            margin: 20px auto 40px auto;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
-        .avatar-wrapper {
-            position: relative;
-            margin-bottom: 28px;
-        }
+        .avatar-wrapper { position: relative; margin-bottom: 28px; }
 
         .avatar-circle {
             width: 88px;
@@ -87,22 +94,10 @@
             cursor: pointer;
         }
 
-        .perfil-form {
-            width: 100%;
-        }
+        .perfil-form { width: 100%; }
 
-        .input-group-perfil {
-            margin-bottom: 16px;
-            text-align: left;
-        }
-
-        .input-group-perfil label {
-            display: block;
-            font-size: 12px;
-            color: #A0AEC0;
-            margin-bottom: 6px;
-        }
-
+        .input-group-perfil { margin-bottom: 16px; text-align: left; }
+        .input-group-perfil label { display: block; font-size: 12px; color: #A0AEC0; margin-bottom: 6px; }
         .input-group-perfil input {
             width: 100%;
             padding: 14px 16px;
@@ -115,18 +110,8 @@
             outline: none;
             transition: border-color 0.2s;
         }
-
-        .input-group-perfil input:focus:not([readonly]) {
-            border-color: #12A388;
-        }
-
-        /* Campos bloqueados para edição (CPF e Data Nasc.) */
-        .input-group-perfil input[readonly] {
-            background-color: #F0F4F8;
-            color: #A0AEC0;
-            cursor: not-allowed;
-            border-color: #E2E8F0;
-        }
+        .input-group-perfil input:focus:not([readonly]) { border-color: #12A388; }
+        .input-group-perfil input[readonly] { background-color: #F0F4F8; color: #A0AEC0; cursor: not-allowed; border-color: #E2E8F0; }
 
         .btn-salvar {
             background-color: #12A388;
@@ -142,12 +127,9 @@
             margin-bottom: 12px;
             transition: background-color 0.2s;
         }
+        .btn-salvar:hover { background-color: #0e826c; }
 
-        .btn-salvar:hover {
-            background-color: #0e826c;
-        }
-
-        .btn-logout {
+        .btn-deletar {
             background-color: transparent;
             color: #E53E3E;
             border: 1px solid #FC8181;
@@ -158,90 +140,99 @@
             font-weight: bold;
             cursor: pointer;
             text-align: center;
-            text-decoration: none;
-            display: block;
-            box-sizing: border-box;
             transition: background-color 0.2s;
         }
-
-        .btn-logout:hover {
-            background-color: #FFF5F5;
+        .btn-deletar:hover { background-color: #FFF5F5; }
+        
+        .alert-error {
+            background-color: #FFF5F5; color: #E53E3E; padding: 14px 24px; border-radius: 8px; margin: 24px 40px 0 40px; font-weight: bold; border: 1px solid #FC8181; font-size: 14px;
         }
+        /* ========================================================================= */
     </style>
 </head>
 <body class="home-body">
 
 <div class="dashboard-layout">
     
-    <!-- BARRA LATERAL (Padrão do Projeto) -->
+    <!-- BARRA LATERAL UNIFICADA -->
     <aside class="sidebar">
         <div class="sidebar-logo">Clini<span>Flow</span></div>
         <ul class="nav-menu">
-            <a href="consultas" class="nav-item"><i class="fa-solid fa-house"></i> Início</a>
+            <a href="home" class="nav-item"><i class="fa-solid fa-house"></i> Início</a>
             <a href="minhas-consultas" class="nav-item"><i class="fa-solid fa-notes-medical"></i> Consultas</a>
-            <a href="perfil" class="nav-item active"><i class="fa-solid fa-user"></i> Perfil</a>
+            <a href="minha-lista-espera" class="nav-item"><i class="fa-solid fa-hourglass-start"></i> Lista(s) de Espera</a>
+            <a href="editar-perfil" class="nav-item active"><i class="fa-solid fa-user"></i> Perfil</a>
             <a href="#" class="nav-item"><i class="fa-solid fa-circle-question"></i> Ajuda</a>
         </ul>
-        <a href="index.html" class="nav-item" style="margin-bottom: 24px; color: #E53E3E;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
+        <a href="/cliniflow/" class="nav-item" style="margin-bottom: 24px; color: #E53E3E;" onclick="return confirm('Tem certeza que deseja sair do sistema?');">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+        </a>
     </aside>
 
     <!-- ÁREA PRINCIPAL -->
-    <main class="main-content" style="background-color: #FFFFFF;">
+    <main class="main-content">
         
-        <!-- Cabeçalho -->
+        <% if ("falha_inativar".equals(erro) || "excecao".equals(erro)) { %>
+            <div class="alert-error">
+                <i class="fa-solid fa-triangle-exclamation"></i> Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.
+            </div>
+        <% } %>
+
         <header class="header-clean">
-            <h2><i class="fa-solid fa-chevron-left" onclick="history.back()"></i> Perfil</h2>
+            <h2>Meu Perfil</h2>
+            <i class="fa-regular fa-bell" style="font-size: 24px; color: #A0AEC0; cursor: pointer;"></i>
         </header>
 
-        <!-- Conteúdo do Perfil -->
-        <div class="perfil-container">
-            
-            <!-- Avatar com Iniciais e Ícone de Edição -->
-            <div class="avatar-wrapper">
-                <div class="avatar-circle">
-                    <%= iniciais %>
-                </div>
-                <div class="avatar-edit-icon">
-                    <i class="fa-solid fa-pen"></i>
-                </div>
-            </div>
-
-            <!-- Formulário de Alteração de Dados -->
-            <form action="usuario" method="POST" class="perfil-form">
+        <div class="scroll-area-perfil">
+            <div class="perfil-container">
                 
-                <div class="input-group-perfil">
-                    <label>Nome</label>
-                    <input type="text" name="nome_usuario" value="<%= nome %>" required>
+                <div class="avatar-wrapper">
+                    <div class="avatar-circle">
+                        <%= iniciais %>
+                    </div>
+                    <div class="avatar-edit-icon" title="Editar foto">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
                 </div>
 
-                <div class="input-group-perfil">
-                    <label>Sobrenome</label>
-                    <input type="text" name="sobrenome_usuario" value="<%= sobrenome %>" required>
-                </div>
+                <!-- Formulário de Atualização (Controlado pelo UsuarioController) -->
+                <form action="usuario" method="POST" class="perfil-form">
+                    
+                    <div class="input-group-perfil">
+                        <label>Nome</label>
+                        <input type="text" name="nome_usuario" value="<%= nome %>" required>
+                    </div>
 
-                <div class="input-group-perfil">
-                    <label>Data de Nascimento</label>
-                    <input type="text" value="<%= dataNascimento %>" readonly>
-                </div>
+                    <div class="input-group-perfil">
+                        <label>Sobrenome</label>
+                        <input type="text" name="sobrenome_usuario" value="<%= sobrenome %>" required>
+                    </div>
 
-                <div class="input-group-perfil">
-                    <label>CPF</label>
-                    <input type="text" value="<%= cpf %>" readonly>
-                </div>
+                    <div class="input-group-perfil">
+                        <label>Data de Nascimento</label>
+                        <input type="text" value="<%= dataNascimento %>" readonly>
+                    </div>
 
-                <div class="input-group-perfil">
-                    <label>E-mail</label>
-                    <input type="email" name="email_usuario" value="<%= email %>" required>
-                </div>
+                    <div class="input-group-perfil">
+                        <label>CPF</label>
+                        <input type="text" value="<%= cpf %>" readonly>
+                    </div>
 
-                <!-- Botões de Ação -->
-                <button type="submit" class="btn-salvar">Salvar Alterações</button>
-                <a href="index.html" class="btn-logout">Sair da Conta</a>
+                    <div class="input-group-perfil">
+                        <label>E-mail</label>
+                        <input type="email" name="email_usuario" value="<%= email %>" required>
+                    </div>
 
-            </form>
+                    <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                </form>
 
+                <!-- Formulário Seguro de Exclusão (Controlado pelo PerfilController) -->
+                <form action="deletar-conta" method="POST" class="perfil-form" onsubmit="return confirm('Atenção: Deseja realmente excluir/desativar sua conta? Você perderá o acesso ao sistema.');">
+                    <button type="submit" class="btn-deletar">Deletar Conta</button>
+                </form>
+
+            </div>
         </div>
-
     </main>
 </div>
 

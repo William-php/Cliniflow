@@ -1,12 +1,33 @@
 <%@page import="com.example.main.models.Perfil"%>
 <%@page import="com.example.main.models.Consulta"%>
 <%@page import="java.util.HashSet"%>
+<%@page import="java.time.format.DateTimeFormatter"%>
 <%
     Perfil usuarioLogado = (Perfil) session.getAttribute("usuarioLogado");
     if (usuarioLogado == null) {
-        response.sendRedirect("index.html");
+        response.sendRedirect("index.jsp");
         return;
     }
+    
+    // Separação inteligente das consultas para alimentar as abas corretamente
+    @SuppressWarnings("unchecked")
+    HashSet<Consulta> listaCompleta = (HashSet<Consulta>) request.getAttribute("consultasUsuarioLogado");
+    HashSet<Consulta> listaAtivas = new HashSet<>();
+    HashSet<Consulta> listaHistorico = new HashSet<>();
+    
+    if (listaCompleta != null && !listaCompleta.isEmpty()) {
+        for (Consulta c : listaCompleta) {
+            String status = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "";
+            if ("CANCELADA".equalsIgnoreCase(status) || "CONCLUIDA".equalsIgnoreCase(status) || "REALIZADA".equalsIgnoreCase(status)) {
+                listaHistorico.add(c);
+            } else {
+                listaAtivas.add(c);
+            }
+        }
+    }
+
+    // Formatador de Data para o padrão Brasileiro
+    DateTimeFormatter formatadorBR = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 %>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -18,265 +39,246 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Estilos específicos para a tela de Minhas Consultas */
-        .header-clean { padding: 32px 40px 0 40px; display: flex; justify-content: space-between; align-items: center; }
-        .header-clean h2 { font-size: 24px; color: #2D3748; display: flex; align-items: center; gap: 12px; }
-        .header-clean h2 i { color: #12A388; cursor: pointer; }
-        .header-clean .btn-sino { font-size: 24px; color: #A0AEC0; cursor: pointer; }
+        /* =========================================================================
+           RECORTAR E COLAR NO SEU STYLE.CSS (Depois não esqueça do Ctrl+F5)
+           ========================================================================= */
         
-        .tabs-container { padding: 24px 40px 0 40px; display: flex; gap: 32px; border-bottom: 2px solid #E2E8F0; margin-bottom: 32px; }
-        .tab-item { font-size: 16px; font-weight: bold; color: #A0AEC0; padding-bottom: 12px; cursor: pointer; border-bottom: 3px solid transparent; text-decoration: none; }
+        body.home-body, .dashboard-layout { height: 100vh; overflow: hidden; margin: 0; }
+        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #F7FAFC; }
+        
+        .header-clean, .tabs-container { flex-shrink: 0; }
+        
+        .scroll-area-consultas { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 40px; min-height: 0; }
+        .scroll-area-consultas::-webkit-scrollbar { width: 6px; }
+        .scroll-area-consultas::-webkit-scrollbar-thumb { background-color: #CBD5E0; border-radius: 4px; }
+
+        .header-clean { padding: 32px 40px 0 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header-clean h2 { font-size: 24px; color: #2D3748; margin: 0; }
+        .header-clean .btn-sino { font-size: 24px; color: #A0AEC0; cursor: pointer; transition: 0.2s; }
+        .header-clean .btn-sino:hover { color: #2D3748; }
+        
+        .tabs-container { padding: 24px 40px 0 40px; display: flex; gap: 32px; border-bottom: 2px solid #E2E8F0; margin-bottom: 24px; }
+        .tab-item { font-size: 16px; font-weight: bold; color: #A0AEC0; padding-bottom: 12px; cursor: pointer; border-bottom: 3px solid transparent; text-decoration: none; transition: 0.2s; }
         .tab-item.active { color: #12A388; border-bottom: 3px solid #12A388; }
         .tab-item:hover:not(.active) { color: #718096; }
 
-        /* =========================================
-           ABA 1: GRID DE ATIVAS 
-           ========================================= */
-        .consultas-grid { padding: 0 40px 40px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .consultas-grid { padding: 0 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
         
-        .consulta-grid-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .cgc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-        .cgc-nome { font-size: 18px; font-weight: bold; color: #2D3748; }
-        .cgc-especialidade { font-size: 14px; color: #A0AEC0; margin-bottom: 24px; }
-        .cgc-footer { display: flex; justify-content: space-between; align-items: center; }
-        .cgc-data { font-size: 14px; color: #4A5568; display: flex; align-items: center; gap: 8px; font-weight: bold; }
-        .cgc-data i { color: #A0AEC0; }
+        .consulta-grid-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .cgc-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .cgc-medico-info { display: flex; flex-direction: column; gap: 4px; }
+        .cgc-nome { font-size: 18px; font-weight: bold; color: #2D3748; margin: 0; }
+        .cgc-especialidade { font-size: 13px; color: #A0AEC0; margin: 0; }
         
-        .btn-cancelar { background: transparent; border: 1px solid #FC8181; color: #E53E3E; padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-listaEspera { background: #12A388; border: 1px solid white; color: white; padding: 4px 16px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-listaEspera:hover { background: white; border: 1px solid #12A388; color: #12A388; padding: 4px 16px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .cgc-data { font-size: 14px; color: #4A5568; display: flex; align-items: center; gap: 8px; font-weight: bold; background: #F7FAFC; padding: 10px; border-radius: 8px; border: 1px solid #EDF2F7; }
+        .cgc-data i { color: #12A388; }
+        
+        /* O Footer agora alinha o botão de cancelar à direita */
+        .cgc-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; }
+        
+        .btn-cancelar { background: transparent; border: 1px solid #FC8181; color: #E53E3E; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-cancelar:hover { background: #FFF5F5; }
-        .badge-confirmada { background-color: #E6FFFA; color: #12A388; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        .badge-pendente-card { background-color: #FFF3E0; color: #ED8936; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        
-        .card-nova-consulta { background: #FFFFFF; border: 2px dashed #E2E8F0; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; min-height: 140px; transition: 0.2s;}
-        .card-nova-consulta:hover { border-color: #12A388; background: #FAFEFD; }
-        .cnc-badge { background-color: #E6FFFA; color: #12A388; padding: 8px 24px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 16px; }
-        .cnc-icon { font-size: 32px; color: #FC8181; }
 
-        /* =========================================
-           ABA 2: HISTÓRICO (TABELA) 
-           ========================================= */
-        #conteudo-historico { padding: 0 40px 40px 40px; display: none; /* Oculto por padrão */ }
-        
-        .search-container { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; justify-content: center; }
-        .search-container label { font-size: 14px; color: #A0AEC0; font-weight: bold; }
-        .search-input { padding: 10px 16px; border: 1px solid #E2E8F0; border-radius: 8px; outline: none; width: 300px; font-size: 14px; }
-        .search-input:focus { border-color: #12A388; }
+        /* REGRAS DAS CORES DAS BADGES */
+        .badge-agendada { background-color: #E6FFFA; color: #12A388; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde */
+        .badge-pendente-card { background-color: #FFF3E0; color: #ED8936; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Amarelo/Laranja */
+        .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Vermelho */
+        .badge-concluida { background-color: #F0FFF4; color: #22543D; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde Escuro */
 
-        .historico-table-wrapper { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        #conteudo-historico { padding: 0 40px; display: none; }
+        .search-container { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .search-input { padding: 12px 16px; border: 1px solid #E2E8F0; border-radius: 8px; outline: none; width: 100%; max-width: 400px; font-size: 14px; transition: 0.2s; }
+        .search-input:focus { border-color: #12A388; box-shadow: 0 0 0 3px rgba(18, 163, 136, 0.1); }
+
+        .historico-table-wrapper { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 24px; }
         .historico-table { width: 100%; border-collapse: collapse; }
-        .historico-table thead { background-color: #E6FFFA; }
-        .historico-table th { padding: 16px; text-align: left; font-size: 14px; color: #12A388; font-weight: bold; }
-        .historico-table td { padding: 16px; font-size: 14px; color: #2D3748; border-bottom: 1px solid #E2E8F0; font-weight: 600; }
+        .historico-table thead { background-color: #F7FAFC; border-bottom: 2px solid #E2E8F0; }
+        .historico-table th { padding: 16px; text-align: left; font-size: 13px; color: #718096; font-weight: bold; text-transform: uppercase; }
+        .historico-table td { padding: 16px; font-size: 14px; color: #2D3748; border-bottom: 1px solid #E2E8F0; font-weight: 500; }
         .historico-table tr:last-child td { border-bottom: none; }
         
         .btn-relatorio { background: transparent; border: 1px solid #12A388; color: #12A388; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-relatorio:hover { background: #E6FFFA; }
-        
-        .badge-realizada { background-color: #E6FFFA; color: #12A388; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
-        .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; }
 
-        .btn-exportar { display: block; width: 100%; background-color: #12A388; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 24px; transition: 0.2s; text-align: center; }
-        .btn-exportar:hover { background-color: #0F8A73; }
+        /* Botão exportar centralizado */
+        .btn-exportar { display: flex; align-items: center; justify-content: center; gap: 8px; background-color: #2D3748; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 0 auto; width: fit-content; }
+        .btn-exportar:hover { background-color: #1A202C; }
         
         @media print {
-            /* 1. Oculta a barra lateral */
-            .sidebar {
-                display: none !important;
-            }
-
-            /* 2. Expande a área principal para ocupar 100% da folha */
-            .main-content {
-                margin-left: 0 !important; 
-                padding: 0 !important;
-                width: 100% !important;
-                background-color: #FFFFFF !important;
-            }
-
-            /* 3. Oculta botões, abas e barra de pesquisa no papel */
-            .btn-exportar,
-            .search-container,
-            .tabs-container,
-            .header-clean i {
-                display: none !important;
-            }
-
-            /* 4. Remove sombras para um visual mais limpo (e economizar tinta) */
-            .historico-table-wrapper {
-                box-shadow: none !important;
-                border: 1px solid #000 !important; /* Borda mais definida para o papel */
-            }
-
-            .historico-table th, .historico-table td {
-                color: #000 !important; /* Força texto preto no relatório */
-            }
+            .sidebar, .btn-exportar, .search-container, .tabs-container, .btn-agendar, .header-clean .btn-sino { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; background-color: #FFFFFF !important; height: auto !important; overflow: visible !important; }
+            .historico-table-wrapper { box-shadow: none !important; border: 1px solid #000 !important; }
+            .historico-table th, .historico-table td { color: #000 !important; }
+            .scroll-area-consultas { overflow: visible !important; height: auto !important; }
         }
+        /* ========================================================================= */
     </style>
 </head>
 <body class="home-body">
 
 <div class="dashboard-layout">
     
-    <!-- BARRA LATERAL -->
     <aside class="sidebar">
         <div class="sidebar-logo">Clini<span>Flow</span></div>
         <ul class="nav-menu">
-            <a href="consultas" class="nav-item"><i class="fa-solid fa-house"></i> Início</a>
+            <a href="home" class="nav-item"><i class="fa-solid fa-house"></i> Início</a>
             <a href="minhas-consultas" class="nav-item active"><i class="fa-solid fa-notes-medical"></i> Consultas</a>
+            <a href="minha-lista-espera" class="nav-item"><i class="fa-solid fa-hourglass-start"></i> Lista(s) de Espera</a>
             <a href="/cliniflow/editar-perfil.jsp" class="nav-item"><i class="fa-solid fa-user"></i> Perfil</a>
             <a href="#" class="nav-item"><i class="fa-solid fa-circle-question"></i> Ajuda</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-hourglass-start"></i> Lista(s) de Espera</a>
         </ul>
-        <a href="index.html" class="nav-item" style="margin-bottom: 24px; color: #E53E3E;"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
+        <!-- Adicionada a confirmação ao Sair -->
+        <a href="/cliniflow/" class="nav-item" style="margin-bottom: 24px; color: #E53E3E;" onclick="return confirm('Tem certeza que deseja sair do sistema?');"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
     </aside>
 
-    <!-- ÁREA PRINCIPAL -->
-    <main class="main-content" style="background-color: #F7FAFC;">
+    <main class="main-content">
         
         <header class="header-clean">
-            <h2><i class="fa-solid fa-chevron-left" onclick="history.back()"></i> Minhas Consultas</h2>
-            <i class="fa-regular fa-bell btn-sino"></i>
+            <h2>Minhas Consultas</h2>
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <button class="btn-agendar" onclick="window.location.href='agendamento'">
+                    <i class="fa-solid fa-plus"></i> Nova Consulta
+                </button>
+                <i class="fa-regular fa-bell btn-sino"></i>
+            </div>
         </header>
 
-        <!-- Navegação em Abas (Adicionado IDs e onclick) -->
         <div class="tabs-container">
             <a href="#" id="tab-ativas" class="tab-item active" onclick="switchTab('ativas')">Ativas</a>
             <a href="#" id="tab-historico" class="tab-item" onclick="switchTab('historico')">Histórico</a>
         </div>
 
-        <!-- ==============================================
-             CONTEÚDO DA ABA: ATIVAS
-             ============================================== -->
-        <div id="conteudo-ativas" class="consultas-grid">
-            <%
-                @SuppressWarnings("unchecked")
-                HashSet<Consulta> lista = (HashSet<Consulta>) request.getAttribute("consultasUsuarioLogado");
-                if (lista != null && !lista.isEmpty()) {
-                    for (Consulta c : lista) {
-                        String statusStr = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "PENDENTE";
-                        String classeBadge = "badge-pendente-card";
-                        String textoBadge = "Pendente";
-                        
-                        if ("CANCELADA".equalsIgnoreCase(statusStr)) {
-                        	classeBadge = "badge-cancelada";
-                            textoBadge = "Cancelada";
-                        }
-                        if ("CONFIRMADA".equalsIgnoreCase(statusStr)) {
-                        	classeBadge = "badge-confirmada";
-                            textoBadge = "Confirmada";
-                        }
-                        
-                        String nomeMedico = "Dr(a). Indefinido";
-                        if (c.getMedicoConsulta() != null && c.getMedicoConsulta().getUsuario() != null) {
-                            nomeMedico = "Dr(a). " + c.getMedicoConsulta().getUsuario().getNomeUsuario();
-                        }
-                        
-                        String especialidade = "Clínico Geral"; 
-                        String dataFormatada = c.getDataHoraInicioConsulta() != null ? c.getDataHoraInicioConsulta().toString().replace("T", ", ") : "Data não definida";
-                        if (textoBadge.equals("Agendada") || textoBadge.equals("Pendente")) {
-                        	
-                        
-            %>
+        <div class="scroll-area-consultas">
             
-                    <div class="consulta-grid-card">
-                        <div>
+            <div id="conteudo-ativas" class="consultas-grid">
+                <%
+                    if (listaAtivas != null && !listaAtivas.isEmpty()) {
+                        for (Consulta c : listaAtivas) {
+                            String statusStr = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "PENDENTE";
+                            
+                            // Lógica de Cores Correta
+                            String classeBadge = "badge-pendente-card"; // Padrão Amarelo
+                            String textoBadge = "Lista de Espera";
+                            
+                            if ("AGENDADA".equalsIgnoreCase(statusStr)) {
+                                classeBadge = "badge-agendada"; // Verde
+                                textoBadge = "Agendada";
+                            }
+                            
+                            String nomeMedico = "Dr(a). Indefinido";
+                            if (c.getMedicoConsulta() != null && c.getMedicoConsulta().getUsuario() != null) {
+                                nomeMedico = "Dr(a). " + c.getMedicoConsulta().getUsuario().getNomeUsuario();
+                            }
+                            
+                            String especialidade = "Clínico Geral"; 
+                            
+                            // Formatação para o Padrão Brasileiro
+                            String dataFormatada = "Data não definida";
+                            if (c.getDataHoraInicioConsulta() != null) {
+                                dataFormatada = c.getDataHoraInicioConsulta().format(formatadorBR);
+                            }
+                %>
+                        <div class="consulta-grid-card">
                             <div class="cgc-header">
-                                <span class="cgc-nome"><%= nomeMedico %></span>
+                                <div class="cgc-medico-info">
+                                    <h4 class="cgc-nome"><%= nomeMedico %></h4>
+                                    <p class="cgc-especialidade"><%= especialidade %></p>
+                                </div>
                                 <span class="<%= classeBadge %>"><%= textoBadge %></span>
                             </div>
-                            <div class="cgc-especialidade"><%= especialidade %></div>
-                        </div>
-                        <div class="cgc-footer">
-                            <span class="cgc-data"><i class="fa-regular fa-calendar"></i> <%= dataFormatada %></span>
-                            <button class="btn-cancelar">Cancelar</button>
-                            <form action="lista-espera" method="GET">
-                            	<input type="hidden" value=<%=c.getIdConsulta() %> name="id_consulta">
-                            	<button class="btn-listaEspera" type="submit">Lista de espera</button>
-                            </form>
                             
+                            <div class="cgc-data">
+                                <i class="fa-regular fa-calendar-check"></i> <%= dataFormatada %>
+                            </div>
                             
+                            <!-- Formulário para fazer o botão de Cancelar funcionar -->
+                            <div class="cgc-footer">
+                                <form action="minhas-consultas" method="POST" onsubmit="return confirm('Tem certeza que deseja cancelar esta consulta?');">
+                                    <input type="hidden" name="acao" value="cancelar">
+                                    <input type="hidden" name="id_consulta" value="<%= c.getIdConsulta() %>">
+                                    <button class="btn-cancelar" type="submit">Cancelar Consulta</button>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-            <%
-                     	}
-                    }
-                } 
-            %>
+                <%
+                        }
+                    } else {
+                %>
+                    <p style="color: #A0AEC0; font-size: 14px; grid-column: 1 / -1;">Você não possui consultas ativas no momento.</p>
+                <%
+                    } 
+                %>
+            </div>
 
-            <div class="card-nova-consulta" onclick="window.location.href='agendamento'">
-                <div class="cnc-badge">Nova Consulta</div>
-                <i class="fa-regular fa-calendar-plus cnc-icon"></i>
+            <div id="conteudo-historico">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass" style="color: #A0AEC0;"></i>
+                    <!-- Adicionado ID e o evento onkeyup -->
+                    <input type="text" id="inputBusca" class="search-input" placeholder="Buscar consulta pelo nome do médico..." onkeyup="filtrarHistorico()">
+                </div>
+
+                <div class="historico-table-wrapper">
+                    <table class="historico-table" id="tabelaHistorico">
+                        <thead>
+                            <tr>
+                                <th>Médico</th>                            
+                                <th>Especialidade</th>
+                                <th>Data / Hora</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <%
+                                if (listaHistorico != null && !listaHistorico.isEmpty()) {
+                                    for(Consulta c : listaHistorico) { 
+                                        String statusStr = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "CONCLUIDA";
+                                        String classeBadge = "badge-concluida";
+                                        String textoBadge = "Concluída";
+                                        
+                                        if ("CANCELADA".equalsIgnoreCase(statusStr)) {
+                                            classeBadge = "badge-cancelada";
+                                            textoBadge = "Cancelada";
+                                        }
+                                        
+                                        String dataFormatadaHistorico = "";
+                                        if (c.getDataHoraInicioConsulta() != null) {
+                                            dataFormatadaHistorico = c.getDataHoraInicioConsulta().format(formatadorBR);
+                                        }
+                            %>
+                            <tr>                            
+                                <td><%= c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario() %></td>
+                                <td>Clínico Geral</td>
+                                <td><%= dataFormatadaHistorico %></td>
+                                <td><span class="<%= classeBadge %>"><%= textoBadge %></span></td>
+                                <td><button class="btn-relatorio">Ver Relatório</button></td>
+                            </tr>                      
+                            <%      }
+                                } else {
+                            %>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #A0AEC0; padding: 32px;">Nenhum histórico de consultas encontrado.</td>
+                            </tr>
+                            <%  } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button class="btn-exportar" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Imprimir Relatório
+                </button>
+
             </div>
         </div>
-
-        <!-- ==============================================
-             CONTEÚDO DA ABA: HISTÓRICO
-             ============================================== -->
-        <div id="conteudo-historico">
-            
-            <div class="search-container">
-                <label>Buscar por nome:</label>
-                <input type="text" class="search-input" placeholder="digite um nome...">
-            </div>
-
-            <div class="historico-table-wrapper">
-                <table class="historico-table">
-                    <thead>
-                        <tr>
-                            <th>Médico</th>                            
-                            <th>Especialidade</th>
-                            <th>Ação</th>
-                            <th>Status <i class="fa-solid fa-chevron-down" style="font-size: 10px; cursor: pointer;"></i></th>
-                            <th>Data/Hora</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Exemplo estático (Você pode implementar o foreach do Java aqui futuramente) -->
-                        <%
-                        	HashSet<Consulta> listaHistorico = (HashSet<Consulta>) request.getAttribute("consultasUsuarioLogado");
-                        	for(Consulta c:listaHistorico) { 
-                        		String statusStr = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "PENDENTE";
-                                String classeBadge = "badge-pendente-card";
-                                String textoBadge = "Pendente";
-                                
-                                if ("CANCELADA".equalsIgnoreCase(statusStr)) {
-                                	classeBadge = "badge-cancelada";
-                                    textoBadge = "Cancelada";
-                                }
-                                if ("CONFIRMADA".equalsIgnoreCase(statusStr)) {
-                                	classeBadge = "badge-confirmada";
-                                    textoBadge = "Confirmada";
-                                }
-                                
-                        %>
-                        <tr>                            
-                            <td><%=c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario() %></td>
-                            <td>Clínico Geral</td>
-                            <td><button class="btn-relatorio">Ver Relatório</button></td>
-                            <td><span class="<%=classeBadge %>"><%=textoBadge %></span></td>
-                            <td><%=c.getDataHoraInicioConsulta() %></td>
-                        </tr>                      
-                        <%} %>
-                    </tbody>
-                </table>
-            </div>
-
-            <button class="btn-exportar" onclick="window.print()"><i class="fa-solid fa-download"></i> Exportar / Imprimir</button>
-
-        </div>
-
     </main>
 </div>
 
-<!-- Script para alternar as abas dinamicamente sem recarregar a página -->
 <script>
+    // Alternar entre abas
     function switchTab(tabName) {
-        // IDs das abas
         const tabAtivas = document.getElementById('tab-ativas');
         const tabHistorico = document.getElementById('tab-historico');
         
-        // IDs dos conteúdos
         const conteudoAtivas = document.getElementById('conteudo-ativas');
         const conteudoHistorico = document.getElementById('conteudo-historico');
 
@@ -294,8 +296,29 @@
             conteudoHistorico.style.display = 'block';
         }
     }
-    
-    
+
+    // Função NOVA: Filtrar a tabela de histórico em tempo real
+    function filtrarHistorico() {
+        let input = document.getElementById("inputBusca");
+        let filtro = input.value.toUpperCase();
+        let tabela = document.getElementById("tabelaHistorico");
+        let linhas = tabela.getElementsByTagName("tr");
+
+        // Loop pelas linhas da tabela (ignorando o cabeçalho)
+        for (let i = 1; i < linhas.length; i++) {
+            // A coluna 0 é a do nome do Médico
+            let colunaMedico = linhas[i].getElementsByTagName("td")[0]; 
+            
+            if (colunaMedico) {
+                let textoOriginal = colunaMedico.textContent || colunaMedico.innerText;
+                if (textoOriginal.toUpperCase().indexOf(filtro) > -1) {
+                    linhas[i].style.display = ""; // Mostra a linha
+                } else {
+                    linhas[i].style.display = "none"; // Oculta a linha
+                }
+            }
+        }
+    }
 </script>
 
 </body>

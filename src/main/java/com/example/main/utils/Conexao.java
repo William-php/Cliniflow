@@ -6,9 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class Conexao {
-	private static final String URL = "jdbc:mysql://localhost:3306/clinica?useTimezone=true&serverTimezone=UTC";
-	private static final String USUARIO = "will";
-    private static final String SENHA = "12345678";
+	private static final String URL = "jdbc:mysql://localhost:3306/cliniflow?useTimezone=true&serverTimezone=UTC";
+	private static final String USUARIO = "root";
+    private static final String SENHA = "12345";
     
     public static Connection conectar() throws SQLException, ClassNotFoundException {
     	Class.forName("com.mysql.cj.jdbc.Driver");
@@ -21,4 +21,19 @@ public class Conexao {
     	conexao.close();
     	return stmt;
     }
+    /*
+    public static void main(String[] args) {
+        try {
+            System.out.println("Tentando conectar ao banco de dados...");
+            Connection testeConexao = conectar();
+            
+            if (testeConexao != null) {
+                System.out.println("SUCESSO! O Java conseguiu se conectar ao banco!");
+                testeConexao.close();
+            }
+        } catch (Exception e) {
+            System.out.println("Conexão falhou.");
+            e.printStackTrace();
+        }
+    }*/
 }

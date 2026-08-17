@@ -1,20 +1,71 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%
+    String erro = request.getParameter("erro");
+    String conta = request.getParameter("conta");
+%>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CliniFlow - Login</title>
-    <!-- Ligando o HTML ao nosso arquivo CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Importação necessária para renderizar o ícone de + -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .alert-login {
+            background-color: #FFF5F5;
+            color: #E53E3E;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+            border: 1px solid #FC8181;
+            font-weight: bold;
+        }
+        .alert-success {
+            background-color: #E6FFFA;
+            color: #12A388;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+            border: 1px solid #12A388;
+            font-weight: bold;
+        }
+        .logo-box {
+            width: 72px;
+            height: 72px;
+            background-color: #12A388;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 16px auto;
+            color: #FFFFFF;
+            font-size: 32px;
+        }
+    </style>
 </head>
 <body>
 
     <div class="login-container">
-        <div class="logo-box">+</div>
+        <div class="logo-box">
+            <i class="fa-solid fa-plus"></i>
+        </div>
         <h2>Clini<span style="color: #12A388;">Flow</span></h2>
         <p>Sua saúde fluindo.</p>
+
+        <% if ("credenciais".equals(erro)) { %>
+            <div class="alert-login">E-mail ou senha incorretos.</div>
+        <% } else if ("conta_inativa".equals(erro)) { %>
+            <div class="alert-login">Esta conta foi desativada pelo usuário.</div>
+        <% } else if ("desativada".equals(conta)) { %>
+            <div class="alert-success">Sua conta foi excluída com sucesso.</div>
+        <% } %>
 
         <form action="login" method="POST">
             <div class="input-group">
