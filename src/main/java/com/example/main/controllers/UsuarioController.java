@@ -18,14 +18,19 @@ public class UsuarioController extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// O método agora retorna true se salvou, ou false se deu erro
+		HttpSession session = request.getSession();
+		Perfil perfil = (Perfil) session.getAttribute("usuarioLogado");
+		
 		boolean sucesso = atualizarUsuario(request, response);
 		
 		if (sucesso) {
-			// Agora sim! Ele redireciona para a home com a flag de mensagem
-			response.sendRedirect("home?atualizado=true");
+			// Redirecionamento dinâmico baseado no tipo de usuário
+			if (perfil != null && perfil.getUsuario() != null && perfil.getUsuario().isAdmUsuario()) {
+				response.sendRedirect("admin-home?atualizado=true");
+			} else {
+				response.sendRedirect("home?atualizado=true");
+			}
 		} else {
-			// Se der erro, ele devolve para a tela de perfil
 			response.sendRedirect("editar-perfil?erro=falha_atualizar");
 		}
 	}
@@ -33,29 +38,44 @@ public class UsuarioController extends HttpServlet {
 	public static boolean atualizarUsuario(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HttpSession session = request.getSession();
 		Perfil perfil = (Perfil) session.getAttribute("usuarioLogado");
-		System.out.println("Processando atualização de usuário...");
 		
 		try {
 			Usuario usuarioAtualizado = removerUsuarioPerfil(perfil);
+			
+			// Dados comuns a todos os perfis
 			usuarioAtualizado.setNomeUsuario(request.getParameter("nome_usuario"));
 			usuarioAtualizado.setSobrenomeUsuario(request.getParameter("sobrenome_usuario"));
 			usuarioAtualizado.setEmailUsuario(request.getParameter("email_usuario"));
+			
+			// Dados editáveis exclusivamente pelo Administrador
+			String cpf = request.getParameter("cpf_usuario");
+			if (cpf != null && !cpf.trim().isEmpty()) {
+				usuarioAtualizado.setCpfUsuario(cpf);
+			}
+			
+			String dataString = request.getParameter("data_nascimento_usuario");
+			if (dataString != null && !dataString.isEmpty()) {
+				java.time.LocalDateTime dataConvertida = java.time.LocalDate.parse(dataString).atStartOfDay();
+				usuarioAtualizado.setDataNascimentoUsuario(dataConvertida);
+			}
+			
+			String sexoParam = request.getParameter("sexo_usuario");
+			if (sexoParam != null && !sexoParam.trim().isEmpty()) {
+				usuarioAtualizado.setSexoUsuario(com.example.main.enums.Sexo.valueOf(sexoParam.toUpperCase()));
+			}
 			
 			int responseBD = UsuarioDAO.putUsuarioById(usuarioAtualizado);
 			
 			if (responseBD != 0) {
 				perfil.setUsuario(usuarioAtualizado);
-				
-				// CORREÇÃO: O nome da sessão TEM que ser 'usuarioLogado' para o cabeçalho atualizar na hora!
 				session.setAttribute("usuarioLogado", perfil);
-				
-				return true; // Sucesso!
+				return true; 
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return false; // Falha!
+		return false; 
 	}
 	
 	public static Usuario removerUsuarioPerfil(Perfil p) throws Exception {
@@ -63,5 +83,4 @@ public class UsuarioController extends HttpServlet {
 		if (usuario == null) throw new Exception();
 		return usuario;
 	}
-	
 }

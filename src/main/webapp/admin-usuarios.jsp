@@ -7,6 +7,16 @@
         response.sendRedirect("index.jsp");
         return;
     }
+
+    String sucesso = request.getParameter("sucesso");
+    String mensagemToast = "";
+    if ("paciente".equalsIgnoreCase(sucesso)) {
+        mensagemToast = "Paciente cadastrado com sucesso!";
+    } else if ("medico".equalsIgnoreCase(sucesso)) {
+        mensagemToast = "Médico cadastrado com sucesso!";
+    } else if ("true".equalsIgnoreCase(sucesso) || "editado".equalsIgnoreCase(sucesso)) {
+        mensagemToast = "Usuário atualizado com sucesso!";
+    }
 %>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -18,11 +28,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* =========================================================================
-           ESTILOS DA TELA DE USUÁRIOS (Copiar para style.css posteriormente)
-           ========================================================================= */
         body.home-body, .dashboard-layout { height: 100vh; overflow: hidden; margin: 0; }
-        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #F7FAFC; }
+        .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #F7FAFC; position: relative; }
         
         .topbar-admin { background-color: #12A388; padding: 24px 40px; color: #FFFFFF; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
         .topbar-admin h2 { font-size: 22px; margin: 0; font-weight: 700; }
@@ -31,20 +38,40 @@
         .scroll-area-admin::-webkit-scrollbar { width: 6px; }
         .scroll-area-admin::-webkit-scrollbar-thumb { background-color: #CBD5E0; border-radius: 4px; }
 
-        /* BARRA DE FERRAMENTAS (Pesquisa, Filtros e Botão) */
+        /* TOAST NOTIFICATION */
+        .toast-sucesso {
+            position: fixed;
+            top: 24px;
+            right: 40px;
+            background-color: #E6FFFA;
+            color: #12A388;
+            padding: 16px 24px;
+            border-radius: 8px;
+            border: 1px solid #12A388;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        .toast-conteudo { display: flex; align-items: center; gap: 12px; }
+        .toast-fechar { cursor: pointer; color: #12A388; font-size: 18px; transition: 0.2s; }
+        .toast-fechar:hover { color: #0e826c; }
+
+        /* BARRA DE FERRAMENTAS */
         .toolbar-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-        
         .toolbar-left { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-        
         .search-box { position: relative; width: 300px; }
         .search-box i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #A0AEC0; }
         .search-box input { width: 100%; padding: 12px 16px 12px 40px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; box-sizing: border-box; }
         .search-box input:focus { border-color: #12A388; box-shadow: 0 0 0 3px rgba(18, 163, 136, 0.1); }
-
         .filter-pills { display: flex; background-color: #EDF2F7; padding: 4px; border-radius: 8px; gap: 4px; }
         .pill-btn { background: transparent; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #718096; cursor: pointer; transition: 0.2s; }
         .pill-btn.active { background-color: #FFFFFF; color: #2D3748; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
         .btn-novo-usuario { background-color: #12A388; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-novo-usuario:hover { background-color: #0e826c; }
 
@@ -55,20 +82,16 @@
         .admin-table th { padding: 16px 24px; text-align: left; font-size: 12px; color: #718096; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .admin-table td { padding: 16px 24px; font-size: 14px; color: #2D3748; border-bottom: 1px solid #E2E8F0; vertical-align: middle; }
         .admin-table tr:last-child td { border-bottom: none; }
-        
-        /* Célula de Usuário (Nome + Email) */
         .user-cell { display: flex; flex-direction: column; gap: 4px; }
         .user-name { font-weight: 700; color: #2D3748; }
         .user-email { font-size: 12px; color: #718096; }
 
-        /* Badges de Perfil e Status */
         .badge-paciente { background-color: #E6FFFA; color: #12A388; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-medico { background-color: #FAF5FF; color: #805AD5; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .status-ativo { color: #38A169; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: 13px; }
         .status-inativo { color: #E53E3E; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: 13px; }
 
-        /* Botões de Ação na Tabela */
-        .btn-icon { background: transparent; border: none; color: #A0AEC0; font-size: 16px; cursor: pointer; transition: 0.2s; padding: 6px; border-radius: 6px; }
+        .btn-icon { background: transparent; border: none; color: #A0AEC0; font-size: 16px; cursor: pointer; transition: 0.2s; padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;}
         .btn-icon:hover { color: #2D3748; background-color: #EDF2F7; }
 
         /* MODAL DE CADASTRO */
@@ -85,14 +108,12 @@
         .modal-card-btn:hover { border-color: #12A388; background-color: #F7FAFC; }
         .modal-card-btn i { font-size: 32px; color: #12A388; }
         .modal-card-btn span { font-weight: bold; font-size: 15px; }
-        /* ========================================================================= */
     </style>
 </head>
 <body class="home-body">
 
 <div class="dashboard-layout">
     
-    <!-- BARRA LATERAL ADMINISTRATIVA -->
     <aside class="sidebar">
         <div class="sidebar-logo">Clini<span>Flow</span></div>
         <ul class="nav-menu">
@@ -108,9 +129,30 @@
         </a>
     </aside>
 
-    <!-- ÁREA PRINCIPAL -->
     <main class="main-content">
         
+        <!-- COMPONENTE FLUTUANTE DINÂMICO (TOAST) -->
+        <% if (!mensagemToast.isEmpty()) { %>
+            <div id="toast-alerta" class="toast-sucesso">
+                <div class="toast-conteudo">
+                    <i class="fa-solid fa-circle-check"></i> 
+                    <span><%= mensagemToast %></span>
+                </div>
+                <i class="fa-solid fa-xmark toast-fechar" onclick="fecharToast()"></i>
+            </div>
+
+            <script>
+                setTimeout(fecharToast, 4000);
+                function fecharToast() {
+                    var toast = document.getElementById("toast-alerta");
+                    if (toast) {
+                        toast.style.opacity = "0";
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }
+            </script>
+        <% } %>
+
         <header class="topbar-admin">
             <h2>Gerenciar Usuários</h2>
             <i class="fa-regular fa-bell" style="font-size: 22px; cursor: pointer;"></i>
@@ -118,16 +160,13 @@
 
         <div class="scroll-area-admin">
             
-            <!-- BARRA DE FERRAMENTAS -->
             <div class="toolbar-container">
                 <div class="toolbar-left">
-                    <!-- Pesquisa -->
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="inputBusca" placeholder="Buscar por nome ou e-mail..." onkeyup="filtrarTabela()">
                     </div>
 
-                    <!-- Filtros (Pills) -->
                     <div class="filter-pills">
                         <button class="pill-btn active" onclick="setFiltroPerfil('TODOS', this)">Todos</button>
                         <button class="pill-btn" onclick="setFiltroPerfil('PACIENTE', this)">Pacientes</button>
@@ -135,13 +174,11 @@
                     </div>
                 </div>
 
-                <!-- Botão Novo Usuário -->
                 <button class="btn-novo-usuario" onclick="abrirModal()">
                     <i class="fa-solid fa-plus"></i> Novo Usuário
                 </button>
             </div>
 
-            <!-- TABELA DE USUÁRIOS -->
             <div class="table-wrapper">
                 <table class="admin-table" id="tabelaUsuarios">
                     <thead>
@@ -161,15 +198,13 @@
                                 for (Perfil p : listaUsuarios) {
                                     com.example.main.models.Usuario u = p.getUsuario();
                                     
-                                    // Pega os dados do Java
                                     String tipoPerfil = p.getTipoPerfil() != null ? p.getTipoPerfil().name() : "INDEFINIDO";
                                     String status = u.getStatusUsuario() != null ? u.getStatusUsuario().name() : "INATIVO";
                                     String nomeCompleto = u.getNomeUsuario() + " " + u.getSobrenomeUsuario();
                                     
-                                    // Configura as cores (CSS) dinamicamente
                                     String badgeClass = "PACIENTE".equalsIgnoreCase(tipoPerfil) ? "badge-paciente" : "badge-medico";
                                     String statusClass = "ATIVO".equalsIgnoreCase(status) ? "status-ativo" : "status-inativo";
-                                    String iconStatus = "ATIVO".equalsIgnoreCase(status) ? "Ativo" : "Inativo";
+                                    String iconStatus = "ATIVO".equalsIgnoreCase(status) ? "Ativo" : "Desativado";
                         %>
                         <tr data-perfil="<%= tipoPerfil %>">
                             <td>
@@ -181,13 +216,25 @@
                             <td><span class="<%= badgeClass %>"><%= tipoPerfil %></span></td>
                             <td><span class="<%= statusClass %>"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> <%= iconStatus %></span></td>
                             <td style="text-align: right;">
-                                <!-- Futuros botões de ação -->
-                                <button class="btn-icon" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                
+                                <a href="admin-editar-usuario?id=<%= u.getIdUsuario() %>" class="btn-icon" title="Editar Perfil"><i class="fa-solid fa-pen-to-square"></i></a>
+                                
                                 <% if ("ATIVO".equalsIgnoreCase(status)) { %>
-                                    <button class="btn-icon" title="Bloquear"><i class="fa-solid fa-ban"></i></button>
+                                    <form action="admin-usuarios" method="POST" style="display:inline;">
+                                        <input type="hidden" name="acao" value="toggle_status">
+                                        <input type="hidden" name="id_usuario" value="<%= u.getIdUsuario() %>">
+                                        <input type="hidden" name="novo_status" value="DESATIVADO">
+                                        <button type="submit" class="btn-icon" title="Bloquear Conta" onclick="return confirm('Deseja realmente bloquear o acesso deste usuário?');"><i class="fa-solid fa-ban"></i></button>
+                                    </form>
                                 <% } else { %>
-                                    <button class="btn-icon" title="Reativar"><i class="fa-solid fa-rotate-left"></i></button>
+                                    <form action="admin-usuarios" method="POST" style="display:inline;">
+                                        <input type="hidden" name="acao" value="toggle_status">
+                                        <input type="hidden" name="id_usuario" value="<%= u.getIdUsuario() %>">
+                                        <input type="hidden" name="novo_status" value="ATIVO">
+                                        <button type="submit" class="btn-icon" title="Reativar Conta" onclick="return confirm('Deseja reativar o acesso deste usuário?');"><i class="fa-solid fa-rotate-left"></i></button>
+                                    </form>
                                 <% } %>
+
                             </td>
                         </tr>
                         <%
@@ -208,7 +255,7 @@
     </main>
 </div>
 
-<!-- MODAL DE SELEÇÃO DE NOVO CADASTRO -->
+<!-- MODAL DE CADASTRO -->
 <div class="modal-overlay" id="modalCadastro">
     <div class="modal-content">
         <div class="modal-header">
@@ -218,11 +265,11 @@
         <p style="color: #718096; font-size: 14px; margin-bottom: 24px; margin-top: -16px;">Selecione o tipo de perfil que deseja registrar no sistema.</p>
         
         <div class="modal-options">
-            <a href="cadastro.html" class="modal-card-btn">
+            <a href="admin-cadastro-paciente" class="modal-card-btn">
                 <i class="fa-solid fa-hospital-user"></i>
                 <span>Novo Paciente</span>
             </a>
-            <a href="cadastro-medico.jsp" class="modal-card-btn" style="border-color: #E9D8FD; color: #805AD5;">
+            <a href="admin-cadastro-medico" class="modal-card-btn" style="border-color: #E9D8FD; color: #805AD5;">
                 <i class="fa-solid fa-user-doctor" style="color: #805AD5;"></i>
                 <span>Novo Médico</span>
             </a>
@@ -230,22 +277,16 @@
     </div>
 </div>
 
-<!-- SCRIPTS DE FILTRAGEM E MODAL -->
 <script>
     let filtroAtual = 'TODOS';
 
-    // Função para alterar o filtro de Perfil pelos botões
     function setFiltroPerfil(perfil, elementoClicado) {
         filtroAtual = perfil;
-        
-        // Remove a classe 'active' de todos os botões e coloca só no clicado
         document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('active'));
         elementoClicado.classList.add('active');
-        
         filtrarTabela();
     }
 
-    // Função que cruza a pesquisa de texto com o filtro de perfil
     function filtrarTabela() {
         let inputBusca = document.getElementById("inputBusca").value.toUpperCase();
         let tabela = document.getElementById("tabelaUsuarios");
@@ -258,14 +299,9 @@
             
             if (celulaUsuario) {
                 let textoUsuario = celulaUsuario.textContent || celulaUsuario.innerText;
-                
-                // Verifica a busca em texto
                 let matchBusca = textoUsuario.toUpperCase().indexOf(inputBusca) > -1;
-                
-                // Verifica o botão de perfil
                 let matchPerfil = (filtroAtual === 'TODOS' || filtroAtual === perfilLinha);
 
-                // Mostra a linha só se passar nos dois testes
                 if (matchBusca && matchPerfil) {
                     linha.style.display = "";
                 } else {
@@ -275,14 +311,8 @@
         }
     }
 
-    // Funções do Modal
-    function abrirModal() {
-        document.getElementById('modalCadastro').classList.add('active');
-    }
-    
-    function fecharModal() {
-        document.getElementById('modalCadastro').classList.remove('active');
-    }
+    function abrirModal() { document.getElementById('modalCadastro').classList.add('active'); }
+    function fecharModal() { document.getElementById('modalCadastro').classList.remove('active'); }
 </script>
 
 </body>

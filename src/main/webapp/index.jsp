@@ -84,7 +84,7 @@
         </form>
         
         <div class="register-container">
-            Não tem uma conta? <a href="cadastro.html" class="register-link">Cadastre-se</a>
+            Não tem uma conta? <a href="cadastro" class="register-link">Cadastre-se</a>
         </div>
     </div>
 

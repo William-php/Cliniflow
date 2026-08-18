@@ -69,6 +69,27 @@
     </aside>
 
     <main class="main-content">
+        
+        <% 
+            String sucesso = request.getParameter("sucesso");
+            if ("espera".equals(sucesso)) { 
+        %>
+            <div id="toast-alerta" class="toast-sucesso" style="background-color: #FFFDF5; color: #DD6B20; border-color: #DD6B20; position: fixed; top: 24px; right: 40px; padding: 16px 24px; border-radius: 8px; border-width: 1px; border-style: solid; font-size: 14px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; gap: 24px; z-index: 9999; transition: opacity 0.3s ease;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-hourglass-half"></i> 
+                    <span>Você entrou na Lista de Espera desta consulta com sucesso!</span>
+                </div>
+                <i class="fa-solid fa-xmark" style="cursor: pointer; color: #DD6B20; font-size: 18px;" onclick="fecharToast()"></i>
+            </div>
+            <script>
+                setTimeout(fecharToast, 4000);
+                function fecharToast() {
+                    var toast = document.getElementById("toast-alerta");
+                    if(toast) { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }
+                }
+            </script>
+        <% } %>
+
         <header class="header-clean">
             <h2>Minhas Listas de Espera</h2>
             <i class="fa-regular fa-bell btn-sino"></i>

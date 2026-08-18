@@ -42,7 +42,33 @@ public class AdminUsuarioController extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// Futuras ações de bloquear/editar usuários via POST virão aqui
-		doGet(request, response);
+		String acao = request.getParameter("acao");
+		
+		if ("toggle_status".equals(acao)) {
+			try {
+				int idUsuario = Integer.parseInt(request.getParameter("id_usuario"));
+				String novoStatusStr = request.getParameter("novo_status");
+				
+				com.example.main.models.Usuario usuario = com.example.main.dao.UsuarioDAO.getUsuarioById(idUsuario);
+				
+				if (usuario != null) {
+					// Verifica qual foi o botão clicado e atualiza no objeto
+					if ("ATIVO".equals(novoStatusStr)) {
+						usuario.setStatusUsuario(com.example.main.enums.StatusUsuario.ATIVO);
+					} else {
+						usuario.setStatusUsuario(com.example.main.enums.StatusUsuario.DESATIVADO);
+					}
+					
+					// Salva a alteração rápida
+					com.example.main.dao.UsuarioDAO.putUsuarioById(usuario);
+				}
+				
+				// Atualiza a página para o admin ver a mudança
+				response.sendRedirect("admin-usuarios");
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.sendRedirect("admin-usuarios");
+			}
+		}
 	}
 }

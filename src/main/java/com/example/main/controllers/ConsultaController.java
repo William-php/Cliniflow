@@ -21,12 +21,10 @@ public class ConsultaController extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String acao = request.getParameter("acao");
 		
-		// Intercepta a requisição de cancelamento
 		if ("cancelar".equals(acao)) {
 			try {
 				int idConsulta = Integer.parseInt(request.getParameter("id_consulta"));
 				
-				// Chama o DAO para mudar o status para Cancelada
 				boolean sucesso = ConsultaDAO.cancelarConsulta(idConsulta);
 				
 				if (sucesso) {
@@ -65,11 +63,9 @@ public class ConsultaController extends HttpServlet {
 		
 		if (usuarioLogado != null) {
 			try {					
-				// 1. Busca a lista do histórico (O que o seu colega já tinha feito)
 				consultasPorUsuarioLogado = ConsultaDAO.getConsultaByPacienteId(usuarioLogado.getIdPerfil());				
 				request.setAttribute("consultasUsuarioLogado", consultasPorUsuarioLogado);
 				
-				// 2. Busca a próxima consulta para exibir no card superior
 				Consulta proximaConsulta = ConsultaDAO.getProximaConsultaByPacienteId(usuarioLogado.getIdPerfil());
 				if (proximaConsulta != null && proximaConsulta.getMedicoConsulta() != null) {
 					String nomeMedico = "Dr(a). " + proximaConsulta.getMedicoConsulta().getUsuario().getNomeUsuario();
@@ -78,7 +74,6 @@ public class ConsultaController extends HttpServlet {
 					request.setAttribute("proxData", dataFormatada);
 				}
 				
-				// 3. Busca as estatísticas para preencher os três cards centrais
 				request.setAttribute("consultasDia", ConsultaDAO.countConsultasByFiltro(usuarioLogado.getIdPerfil(), "DIA"));
 				request.setAttribute("consultasMes", ConsultaDAO.countConsultasByFiltro(usuarioLogado.getIdPerfil(), "MES"));
 				request.setAttribute("totalConsultas", ConsultaDAO.countConsultasByFiltro(usuarioLogado.getIdPerfil(), "TOTAL"));
@@ -86,7 +81,6 @@ public class ConsultaController extends HttpServlet {
 				request.getRequestDispatcher("home.jsp").forward(request, response);
 			} catch (Exception e) {
 				e.printStackTrace();
-				// Em caso de erro, ainda manda para a home para não dar tela branca
 				request.getRequestDispatcher("home.jsp").forward(request, response);
 			}
 		} else {

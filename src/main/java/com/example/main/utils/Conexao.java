@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class Conexao {
-	private static final String URL = "jdbc:mysql://localhost:3306/cliniflow?useTimezone=true&serverTimezone=UTC";
+	private static final String URL = "jdbc:mysql://localhost:3306/cliniflow?useTimezone=true&serverTimezone=America/Sao_Paulo";
 	private static final String USUARIO = "root";
     private static final String SENHA = "12345";
     

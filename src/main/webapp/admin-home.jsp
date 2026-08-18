@@ -13,6 +13,9 @@
     String sobrenomeAdmin = usr.getSobrenomeUsuario() != null ? usr.getSobrenomeUsuario() : "";
     String nomeCompleto = (nomeAdmin + " " + sobrenomeAdmin).trim();
 
+    // Leitura do parâmetro de feedback de atualização
+    String atualizado = request.getParameter("atualizado");
+
     // Valores dinâmicos vindos do Controller (com fallback seguro para 0)
     Integer totalPacientes = (Integer) request.getAttribute("totalPacientes");
     Integer totalMedicos = (Integer) request.getAttribute("totalMedicos");
@@ -24,6 +27,7 @@
     int qtdConsultasHoje = consultasHoje != null ? consultasHoje : 0;
     int qtdListasEspera = listasEsperaAtivas != null ? listasEsperaAtivas : 2;
 %>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -193,6 +197,30 @@
             transform: translateX(4px);
         }
 
+        /* NOTIFICAÇÃO FLUTUANTE (TOAST) */
+        .toast-sucesso {
+            position: fixed;
+            top: 24px;
+            right: 40px;
+            background-color: #E6FFFA;
+            color: #12A388;
+            padding: 16px 24px;
+            border-radius: 8px;
+            border: 1px solid #12A388;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        .toast-conteudo { display: flex; align-items: center; gap: 12px; }
+        .toast-fechar { cursor: pointer; color: #12A388; font-size: 18px; transition: 0.2s; }
+        .toast-fechar:hover { color: #0e826c; }
+
         @media (max-width: 1024px) {
             .admin-metrics-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -225,6 +253,29 @@
     <!-- ÁREA PRINCIPAL -->
     <main class="main-content">
         
+        <!-- MENSAGEM FLUTUANTE DE DADOS ATUALIZADOS -->
+        <% if ("true".equals(atualizado)) { %>
+            <div id="toast-alerta" class="toast-sucesso">
+                <div class="toast-conteudo">
+                    <i class="fa-solid fa-circle-check"></i> 
+                    <span>Perfil atualizado com sucesso!</span>
+                </div>
+                <i class="fa-solid fa-xmark toast-fechar" onclick="fecharToast()"></i>
+            </div>
+
+            <script>
+                setTimeout(fecharToast, 4000);
+
+                function fecharToast() {
+                    var toast = document.getElementById("toast-alerta");
+                    if(toast) {
+                        toast.style.opacity = "0";
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }
+            </script>
+        <% } %>
+
         <!-- CABEÇALHO VERDE CLÍNIFLOW -->
         <header class="topbar-admin">
             <div class="topbar-admin-user">
@@ -283,7 +334,7 @@
                             <i class="fa-solid fa-calendar-check"></i>
                         </div>
                         <div class="management-text">
-                            <h4>Gerenciar Consultas</h4>
+                            <h4>Consultas</h4>
                             <p>Todas as consultas do sistema</p>
                         </div>
                     </div>

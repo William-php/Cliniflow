@@ -4,5 +4,6 @@ public enum StatusConsulta {
 	REALIZADA,
 	CANCELADA,
 	MARCADA,
-	AGENDADA
+	AGENDADA,
+	CONCLUIDA
 }

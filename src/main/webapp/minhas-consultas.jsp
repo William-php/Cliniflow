@@ -9,7 +9,6 @@
         return;
     }
     
-    // Separação inteligente das consultas para alimentar as abas corretamente
     @SuppressWarnings("unchecked")
     HashSet<Consulta> listaCompleta = (HashSet<Consulta>) request.getAttribute("consultasUsuarioLogado");
     HashSet<Consulta> listaAtivas = new HashSet<>();
@@ -26,7 +25,6 @@
         }
     }
 
-    // Formatador de Data para o padrão Brasileiro
     DateTimeFormatter formatadorBR = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
 %>
 <!DOCTYPE html>
@@ -39,10 +37,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* =========================================================================
-           RECORTAR E COLAR NO SEU STYLE.CSS (Depois não esqueça do Ctrl+F5)
-           ========================================================================= */
-        
         body.home-body, .dashboard-layout { height: 100vh; overflow: hidden; margin: 0; }
         .main-content { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-color: #F7FAFC; }
         
@@ -73,15 +67,13 @@
         .cgc-data { font-size: 14px; color: #4A5568; display: flex; align-items: center; gap: 8px; font-weight: bold; background: #F7FAFC; padding: 10px; border-radius: 8px; border: 1px solid #EDF2F7; }
         .cgc-data i { color: #12A388; }
         
-        /* O Footer agora alinha o botão de cancelar à direita */
         .cgc-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; }
-        
         .btn-cancelar { background: transparent; border: 1px solid #FC8181; color: #E53E3E; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-cancelar:hover { background: #FFF5F5; }
 
         /* REGRAS DAS CORES DAS BADGES */
         .badge-agendada { background-color: #E6FFFA; color: #12A388; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde */
-        .badge-pendente-card { background-color: #FFF3E0; color: #ED8936; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Amarelo/Laranja */
+        .badge-espera { background-color: #FFFDF5; color: #DD6B20; border: 1px solid #FEEBC8; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Laranja/Amarelo */
         .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Vermelho */
         .badge-concluida { background-color: #F0FFF4; color: #22543D; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde Escuro */
 
@@ -100,7 +92,6 @@
         .btn-relatorio { background: transparent; border: 1px solid #12A388; color: #12A388; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-relatorio:hover { background: #E6FFFA; }
 
-        /* Botão exportar centralizado */
         .btn-exportar { display: flex; align-items: center; justify-content: center; gap: 8px; background-color: #2D3748; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 0 auto; width: fit-content; }
         .btn-exportar:hover { background-color: #1A202C; }
         
@@ -111,7 +102,6 @@
             .historico-table th, .historico-table td { color: #000 !important; }
             .scroll-area-consultas { overflow: visible !important; height: auto !important; }
         }
-        /* ========================================================================= */
     </style>
 </head>
 <body class="home-body">
@@ -124,10 +114,9 @@
             <a href="home" class="nav-item"><i class="fa-solid fa-house"></i> Início</a>
             <a href="minhas-consultas" class="nav-item active"><i class="fa-solid fa-notes-medical"></i> Consultas</a>
             <a href="minha-lista-espera" class="nav-item"><i class="fa-solid fa-hourglass-start"></i> Lista(s) de Espera</a>
-            <a href="/cliniflow/editar-perfil.jsp" class="nav-item"><i class="fa-solid fa-user"></i> Perfil</a>
+            <a href="editar-perfil" class="nav-item"><i class="fa-solid fa-user"></i> Perfil</a>
             <a href="#" class="nav-item"><i class="fa-solid fa-circle-question"></i> Ajuda</a>
         </ul>
-        <!-- Adicionada a confirmação ao Sair -->
         <a href="/cliniflow/" class="nav-item" style="margin-bottom: 24px; color: #E53E3E;" onclick="return confirm('Tem certeza que deseja sair do sistema?');"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
     </aside>
 
@@ -156,23 +145,19 @@
                         for (Consulta c : listaAtivas) {
                             String statusStr = c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "PENDENTE";
                             
-                            // Lógica de Cores Correta
-                            String classeBadge = "badge-pendente-card"; // Padrão Amarelo
-                            String textoBadge = "Lista de Espera";
+                            String classeBadge = "badge-agendada"; 
+                            String textoBadge = "Agendada";
                             
-                            if ("AGENDADA".equalsIgnoreCase(statusStr)) {
-                                classeBadge = "badge-agendada"; // Verde
-                                textoBadge = "Agendada";
+                            if ("ESPERA".equalsIgnoreCase(statusStr) || "PENDENTE".equalsIgnoreCase(statusStr)) {
+                                classeBadge = "badge-espera";
+                                textoBadge = "Lista de Espera";
                             }
                             
                             String nomeMedico = "Dr(a). Indefinido";
                             if (c.getMedicoConsulta() != null && c.getMedicoConsulta().getUsuario() != null) {
-                                nomeMedico = "Dr(a). " + c.getMedicoConsulta().getUsuario().getNomeUsuario();
+                                nomeMedico = "Dr(a). " + c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario();
                             }
                             
-                            String especialidade = "Clínico Geral"; 
-                            
-                            // Formatação para o Padrão Brasileiro
                             String dataFormatada = "Data não definida";
                             if (c.getDataHoraInicioConsulta() != null) {
                                 dataFormatada = c.getDataHoraInicioConsulta().format(formatadorBR);
@@ -182,7 +167,7 @@
                             <div class="cgc-header">
                                 <div class="cgc-medico-info">
                                     <h4 class="cgc-nome"><%= nomeMedico %></h4>
-                                    <p class="cgc-especialidade"><%= especialidade %></p>
+                                    <p class="cgc-especialidade">Consulta Médica</p>
                                 </div>
                                 <span class="<%= classeBadge %>"><%= textoBadge %></span>
                             </div>
@@ -191,7 +176,6 @@
                                 <i class="fa-regular fa-calendar-check"></i> <%= dataFormatada %>
                             </div>
                             
-                            <!-- Formulário para fazer o botão de Cancelar funcionar -->
                             <div class="cgc-footer">
                                 <form action="minhas-consultas" method="POST" onsubmit="return confirm('Tem certeza que deseja cancelar esta consulta?');">
                                     <input type="hidden" name="acao" value="cancelar">
@@ -213,7 +197,6 @@
             <div id="conteudo-historico">
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass" style="color: #A0AEC0;"></i>
-                    <!-- Adicionado ID e o evento onkeyup -->
                     <input type="text" id="inputBusca" class="search-input" placeholder="Buscar consulta pelo nome do médico..." onkeyup="filtrarHistorico()">
                 </div>
 
@@ -221,7 +204,7 @@
                     <table class="historico-table" id="tabelaHistorico">
                         <thead>
                             <tr>
-                                <th>Médico</th>                            
+                                <th>Médico</th>                             
                                 <th>Especialidade</th>
                                 <th>Data / Hora</th>
                                 <th>Status</th>
@@ -246,9 +229,9 @@
                                             dataFormatadaHistorico = c.getDataHoraInicioConsulta().format(formatadorBR);
                                         }
                             %>
-                            <tr>                            
+                            <tr>                                
                                 <td><%= c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario() %></td>
-                                <td>Clínico Geral</td>
+                                <td>Consulta Médica</td>
                                 <td><%= dataFormatadaHistorico %></td>
                                 <td><span class="<%= classeBadge %>"><%= textoBadge %></span></td>
                                 <td><button class="btn-relatorio">Ver Relatório</button></td>
@@ -274,7 +257,6 @@
 </div>
 
 <script>
-    // Alternar entre abas
     function switchTab(tabName) {
         const tabAtivas = document.getElementById('tab-ativas');
         const tabHistorico = document.getElementById('tab-historico');
@@ -297,24 +279,21 @@
         }
     }
 
-    // Função NOVA: Filtrar a tabela de histórico em tempo real
     function filtrarHistorico() {
         let input = document.getElementById("inputBusca");
         let filtro = input.value.toUpperCase();
         let tabela = document.getElementById("tabelaHistorico");
         let linhas = tabela.getElementsByTagName("tr");
 
-        // Loop pelas linhas da tabela (ignorando o cabeçalho)
         for (let i = 1; i < linhas.length; i++) {
-            // A coluna 0 é a do nome do Médico
             let colunaMedico = linhas[i].getElementsByTagName("td")[0]; 
             
             if (colunaMedico) {
                 let textoOriginal = colunaMedico.textContent || colunaMedico.innerText;
                 if (textoOriginal.toUpperCase().indexOf(filtro) > -1) {
-                    linhas[i].style.display = ""; // Mostra a linha
+                    linhas[i].style.display = "";
                 } else {
-                    linhas[i].style.display = "none"; // Oculta a linha
+                    linhas[i].style.display = "none";
                 }
             }
         }

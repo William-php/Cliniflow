@@ -81,6 +81,35 @@ h2, h3, h4, p { margin: 0; }
 .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
 .badge-concluida { background-color: #E6FFFA; color: #319795; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
 
+/* ---------------HOME-Paciente---------------------- */
+/* Status Verde para Consultas Confirmadas/Agendadas */
+.status-agendada { 
+    color: #38A169; 
+    font-weight: bold; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+    font-size: 13px; 
+    background-color: #F0FFF4; 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+}
+/* Status Amarelo para Lista de Espera */
+.status-espera { 
+    color: #DD6B20; 
+    font-weight: bold; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+    font-size: 13px; 
+    background-color: #FFFDF5; 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+}
+
+
+
+
 /* =========================================================================
    NOTIFICAÇÃO FLUTUANTE (TOAST)
    ========================================================================= */
@@ -126,8 +155,14 @@ h2, h3, h4, p { margin: 0; }
 }
 
 
-
-
+/* ---------------BOTÔES do agendamento-------------------- */
+.slot-btn { background-color: #F7FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px; color: #4A5568; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.slot-btn:hover { border-color: #12A388; color: #12A388; }
+.slot-btn.active { background-color: #12A388; color: white; border-color: #12A388; }
+/* Estilização brilhante para Lista de Espera (Ocupado) */
+.slot-btn.occupied { background-color: #FFF5F5; color: #E53E3E; border-color: #FC8181; }
+.slot-btn.occupied:hover { background-color: #FED7D7; }
+.slot-btn.occupied.active { background-color: #E53E3E; color: white; border-color: #E53E3E; }
 
 
 
