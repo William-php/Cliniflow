@@ -1,3 +1,5 @@
+<%@page import="jdk.internal.org.jline.terminal.TerminalBuilder.SystemOutput"%>
+<%@page import="java.util.HashMap"%>
 <%@page import="com.example.main.models.Perfil"%>
 <%@page import="com.example.main.models.Consulta"%>
 <%@page import="java.util.HashSet"%>
@@ -72,10 +74,10 @@
         .btn-cancelar:hover { background: #FFF5F5; }
 
         /* REGRAS DAS CORES DAS BADGES */
-        .badge-agendada { background-color: #E6FFFA; color: #12A388; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde */
-        .badge-espera { background-color: #FFFDF5; color: #DD6B20; border: 1px solid #FEEBC8; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Laranja/Amarelo */
-        .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Vermelho */
-        .badge-concluida { background-color: #F0FFF4; color: #22543D; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; } /* Verde Escuro */
+        .badge-agendada { background-color: #E6FFFA; color: #12A388; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-espera { background-color: #FFFDF5; color: #DD6B20; border: 1px solid #FEEBC8; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-cancelada { background-color: #FFF5F5; color: #E53E3E; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-concluida { background-color: #F0FFF4; color: #22543D; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
 
         #conteudo-historico { padding: 0 40px; display: none; }
         .search-container { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -95,12 +97,43 @@
         .btn-exportar { display: flex; align-items: center; justify-content: center; gap: 8px; background-color: #2D3748; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 0 auto; width: fit-content; }
         .btn-exportar:hover { background-color: #1A202C; }
         
+        /* --- ESTILOS DO RELATÓRIO ESPECÍFICO DE IMPRESSÃO --- */
+        .print-modal-area { display: none; }
+
         @media print {
             .sidebar, .btn-exportar, .search-container, .tabs-container, .btn-agendar, .header-clean .btn-sino { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; background-color: #FFFFFF !important; height: auto !important; overflow: visible !important; }
             .historico-table-wrapper { box-shadow: none !important; border: 1px solid #000 !important; }
             .historico-table th, .historico-table td { color: #000 !important; }
             .scroll-area-consultas { overflow: visible !important; height: auto !important; }
+
+            /* Quando for impressão específica, oculta a página normal */
+            body.print-specific .dashboard-layout { display: none !important; }
+            
+            /* Exibe e formata apenas a área do relatório */
+            body.print-specific .print-modal-area { 
+                display: block !important; 
+                width: 100%; 
+                max-width: 600px; 
+                margin: 0 auto; 
+                padding: 32px; 
+                border: 1px solid #E2E8F0; 
+                border-radius: 16px;
+                font-family: Arial, sans-serif;
+            }
+            
+            /* Forçar a impressão das cores de fundo das badges */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .print-header { display: flex; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 24px; }
+            .print-header h3 { margin: 0; font-size: 20px; color: #2D3748; display: flex; align-items: center; gap: 10px; }
+            .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #EDF2F7; }
+            .detail-row:last-child { border-bottom: none; }
+            .detail-label { font-size: 13px; color: #718096; font-weight: bold; text-transform: uppercase; }
+            .detail-value { font-size: 15px; color: #2D3748; font-weight: 500; text-align: right; }
         }
     </style>
 </head>
@@ -228,13 +261,29 @@
                                         if (c.getDataHoraInicioConsulta() != null) {
                                             dataFormatadaHistorico = c.getDataHoraInicioConsulta().format(formatadorBR);
                                         }
+                                        
+                                        @SuppressWarnings("unchecked")
+                                        HashMap<Integer, String> mapaEspecialidades = (HashMap<Integer, String>) request.getAttribute("mapaEspecialidades");
+                                        String especialidade = "Clínico Geral";
+                                        if (mapaEspecialidades != null && c.getMedicoConsulta() != null && mapaEspecialidades.containsKey(c.getMedicoConsulta().getIdPerfil())) {
+                                            especialidade = mapaEspecialidades.get(c.getMedicoConsulta().getIdPerfil());
+                                        }
+                                        
+                                        // Variaveis de dados para o relatorio de impressao especifico
+                                        String medicoNome = "Dr(a). " + c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario();
+                                        String pacienteNome = usuarioLogado.getUsuario().getNomeUsuario() + " " + usuarioLogado.getUsuario().getSobrenomeUsuario();
                             %>
                             <tr>                                
-                                <td><%= c.getMedicoConsulta().getUsuario().getNomeUsuario() + " " + c.getMedicoConsulta().getUsuario().getSobrenomeUsuario() %></td>
-                                <td>Consulta Médica</td>
+                                <td><%= medicoNome %></td>
+                                <td><%= especialidade %></td>
                                 <td><%= dataFormatadaHistorico %></td>
                                 <td><span class="<%= classeBadge %>"><%= textoBadge %></span></td>
-                                <td><button class="btn-relatorio">Ver Relatório</button></td>
+                                <td>
+                                    <!-- Botão com o onclick ativando a função de impressão -->
+                                    <button class="btn-relatorio" onclick="imprimirRelatorioEspecifico('<%= pacienteNome %>', '<%= medicoNome %>', '<%= especialidade %>', '<%= dataFormatadaHistorico %>', '<%= textoBadge %>', '<%= classeBadge %>')">
+                                        Ver Relatório
+                                    </button>
+                                </td>
                             </tr>                      
                             <%      }
                                 } else {
@@ -248,12 +297,42 @@
                 </div>
 
                 <button class="btn-exportar" onclick="window.print()">
-                    <i class="fa-solid fa-print"></i> Imprimir Relatório
+                    <i class="fa-solid fa-print"></i> Imprimir Relatório Geral
                 </button>
 
             </div>
         </div>
     </main>
+</div>
+
+<!-- ÁREA EXCLUSIVA PARA A IMPRESSÃO DO RELATÓRIO ESPECÍFICO -->
+<div class="print-modal-area" id="areaRelatorioImpressao">
+    <div class="print-header">
+        <h3><i class="fa-solid fa-stethoscope" style="color: #12A388;"></i> Detalhes da Consulta</h3>
+    </div>
+    
+    <div>
+        <div class="detail-row">
+            <span class="detail-label">Paciente</span>
+            <span class="detail-value" id="print-paciente">--</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Médico Responsável</span>
+            <span class="detail-value" id="print-medico">--</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Especialidade</span>
+            <span class="detail-value" id="print-especialidade">--</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Data e Horário</span>
+            <span class="detail-value" id="print-data">--</span>
+        </div>
+        <div class="detail-row" style="margin-top: 8px;">
+            <span class="detail-label">Status Atual</span>
+            <span id="print-status" class="badge-agendada">--</span>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -297,6 +376,32 @@
                 }
             }
         }
+    }
+
+    // NOVA FUNÇÃO: Preenche os dados e imprime apenas o relatório específico
+    function imprimirRelatorioEspecifico(paciente, medico, especialidade, data, textoStatus, classeBadge) {
+        // Preenche os dados no HTML oculto
+        document.getElementById('print-paciente').innerText = paciente;
+        document.getElementById('print-medico').innerText = medico;
+        document.getElementById('print-especialidade').innerText = especialidade;
+        document.getElementById('print-data').innerText = data;
+        
+        // Configura a cor e o texto do status
+        let badgeElement = document.getElementById('print-status');
+        badgeElement.className = ''; // Limpa as classes antigas
+        badgeElement.classList.add(classeBadge);
+        badgeElement.innerText = textoStatus;
+        
+        // Adiciona a classe no body para ativar o CSS exclusivo de impressão do modal
+        document.body.classList.add('print-specific');
+        
+        // Aciona o diálogo de impressão do navegador
+        window.print();
+        
+        // Remove a classe após fechar a tela de impressão
+        setTimeout(() => {
+            document.body.classList.remove('print-specific');
+        }, 500);
     }
 </script>
 

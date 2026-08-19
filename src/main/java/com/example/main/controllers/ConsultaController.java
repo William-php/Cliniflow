@@ -1,10 +1,15 @@
 package com.example.main.controllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import com.example.main.dao.ConsultaDAO;
+import com.example.main.dao.EspecialidadeDAO;
 import com.example.main.models.Consulta;
+import com.example.main.models.Especialidade;
 import com.example.main.models.Perfil;
 
 import jakarta.servlet.ServletException;
@@ -92,10 +97,37 @@ public class ConsultaController extends HttpServlet {
 		HttpSession session = request.getSession();
 		Perfil usuarioLogado = (Perfil) session.getAttribute("usuarioLogado");
 		HashSet<Consulta> consultasPorUsuarioLogado = new HashSet<Consulta>();
+		HashMap<Integer, String> mapaEspecialidades = new HashMap<>();
 		
 		if (usuarioLogado != null) {
 			try {					
 				consultasPorUsuarioLogado = ConsultaDAO.getConsultaByPacienteId(usuarioLogado.getIdPerfil());
+				HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
+				if (todasEsp.size() > 0) {
+					for (Consulta c : consultasPorUsuarioLogado) {
+	                    if (c.getMedicoConsulta() != null) {
+	                        int idMedico = c.getMedicoConsulta().getIdPerfil();
+	                        
+	                        // Se ainda não buscamos a especialidade desse médico, nós buscamos agora
+	                        if (!mapaEspecialidades.containsKey(idMedico)) {
+	                            List<Integer> idsEsp = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idMedico);
+	                            List<String> nomesEsp = new ArrayList<>();
+	                            
+	                            for (Integer id : idsEsp) {
+	                                for (Especialidade e : todasEsp) {
+	                                    if (e.getIdEspecialidade() == id) {
+	                                        nomesEsp.add(e.getTipoEspecialidade().name()); // Pega o TIPO (ex: ORTOPEDIA)
+	                                    }
+	                                }
+	                            }
+	                            
+	                            String textoEsp = nomesEsp.isEmpty() ? "Clínico Geral" : String.join(", ", nomesEsp);
+	                            mapaEspecialidades.put(idMedico, textoEsp);
+	                        }
+	                    }
+	                }
+				}
+				request.setAttribute("mapaEspecialidades", mapaEspecialidades);
 				request.setAttribute("consultasUsuarioLogado", consultasPorUsuarioLogado);
 				request.getRequestDispatcher("minhas-consultas.jsp").forward(request, response);
 			} catch (Exception e) {

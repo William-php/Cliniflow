@@ -374,13 +374,63 @@
         
         // Usamos sessionStorage para garantir que a notificação só seja gerada 1x por agendamento
         const handled = sessionStorage.getItem('notif_gerada_' + sucesso);
+        
         if (sucesso && !handled) {
-            if (sucesso === 'agendada') {
-                adicionarNotificacao('Consulta Confirmada!', 'Você tem um novo agendamento marcado. Chegue com 15min de antecedência.');
-            } else if (sucesso === 'espera') {
-                adicionarNotificacao('Lista de Espera', 'Você entrou na fila. Te avisaremos caso o sistema libere uma vaga pra você!');
+            
+            // 1. Tentar buscar os dados detalhados da consulta no localStorage
+            let dadosConsulta = null;
+            const savedData = localStorage.getItem('dadosUltimaConsulta');
+            
+            if (savedData) {
+                try {
+                    dadosConsulta = JSON.parse(savedData);
+                } catch(e) {
+                    console.error("Erro ao ler localStorage", e);
+                }
             }
-            sessionStorage.setItem('notif_gerada_' + sucesso, 'true');
+
+            let tituloNotificacao = "";
+            let mensagemNotificacao = "";
+
+            // 2. Montar as mensagens dinamicamente
+            if (sucesso === 'agendada') {
+                tituloNotificacao = 'Consulta Confirmada!';
+                
+                if (dadosConsulta) {
+                    // Formata "2026-08-25" para "25/08/2026"
+                    const partesData = dadosConsulta.data.split('-');
+                    const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dadosConsulta.data;
+                    
+                    // Pega apenas o horário caso venha algum texto extra (ex: "14:00 - LIVRE")
+                    const horarioLimpo = dadosConsulta.horarioRaw.split(' ')[0];
+
+                    mensagemNotificacao = `Sua consulta com o(a) <b>${dadosConsulta.medico}</b> (${dadosConsulta.especialidade}) foi agendada para o dia <b>${dataFormatada}</b> às <b>${horarioLimpo}</b>.`;
+                } else {
+                    mensagemNotificacao = 'Você tem um novo agendamento marcado. Chegue com 15min de antecedência.';
+                }
+                
+            } else if (sucesso === 'espera') {
+                tituloNotificacao = 'Lista de Espera';
+                
+                if (dadosConsulta) {
+                    const partesData = dadosConsulta.data.split('-');
+                    const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dadosConsulta.data;
+                    const horarioLimpo = dadosConsulta.horarioRaw.split(' ')[0];
+
+                    mensagemNotificacao = `Você entrou na fila de espera para o(a) <b>${dadosConsulta.medico}</b> no dia <b>${dataFormatada}</b> às <b>${horarioLimpo}</b>. Avisaremos se liberar vaga!`;
+                } else {
+                    mensagemNotificacao = 'Você entrou na fila. Te avisaremos caso o sistema libere uma vaga pra você!';
+                }
+            }
+            
+            // 3. Dispara a notificação e salva a flag na sessão
+            if (tituloNotificacao) {
+                adicionarNotificacao(tituloNotificacao, mensagemNotificacao);
+                sessionStorage.setItem('notif_gerada_' + sucesso, 'true');
+                
+                // Limpa o localStorage para que agendamentos futuros não usem dados velhos
+                localStorage.removeItem('dadosUltimaConsulta');
+            }
         }
         
         renderizarNotificacoes();

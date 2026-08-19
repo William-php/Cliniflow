@@ -6,9 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class Conexao {
-	private static final String URL = "jdbc:mysql://localhost:3306/cliniflow?useTimezone=true&serverTimezone=America/Sao_Paulo";
-	private static final String USUARIO = "root";
-    private static final String SENHA = "12345";
+	private static final String URL = "jdbc:mysql://localhost:3306/clinica";
+	private static final String USUARIO = "will";
+    private static final String SENHA = "12345678";
     
     public static Connection conectar() throws SQLException, ClassNotFoundException {
     	Class.forName("com.mysql.cj.jdbc.Driver");

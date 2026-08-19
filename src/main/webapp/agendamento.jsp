@@ -107,6 +107,19 @@
                 <form action="agendamento" method="POST" id="formAgendamento">
                     <input type="hidden" name="data_escolhida" id="data_escolhida">
                     <input type="hidden" name="horario_escolhido" id="horario_escolhido">
+                    
+                    <!-- ========================================== -->
+                    <!-- CAMPO MOCADO INVISÍVEL (Enviado no POST) -->
+                    <input type="hidden" name="campo_mocado_exemplo" value="VALOR_MOCADO_AQUI">
+                    <!-- ========================================== -->
+
+                    <!-- ========================================== -->
+                    <!-- CAMPO MOCADO VISÍVEL (Opcional - Exemplo: Tipo de Consulta) -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12px; color: #A0AEC0; margin-bottom: 4px; display: block;">Tipo de Atendimento</label>
+                        <input type="text" class="select-custom" name="tipo_atendimento_mocado" value="Presencial" readonly style="background-color: #F7FAFC; color: #718096; cursor: not-allowed; border: 1px solid #E2E8F0; width: 100%; padding: 10px; border-radius: 8px;">
+                    </div>
+                    <!-- ========================================== -->
 
                     <div class="input-group" style="margin-bottom: 0;">
                         <label style="font-size: 12px; color: #A0AEC0; margin-bottom: 4px; display: block;">Especialidade</label>
@@ -323,6 +336,38 @@
         btnSubmit.classList.remove("btn-espera-laranja");
         agendaDatasGlobal = [];
     }
+    
+	document.getElementById('formAgendamento').addEventListener('submit', function(event) {
+        
+        // Obtém os elementos select para pegar os textos das opções selecionadas
+        const selectEspecialidade = document.getElementById('especialidade');
+        const selectMedico = document.getElementById('medico');
+        
+        // Extrai os valores e textos
+        const especialidadeNome = selectEspecialidade.options[selectEspecialidade.selectedIndex].text;
+        const medicoNome = selectMedico.options[selectMedico.selectedIndex].text;
+        const dataEscolhida = document.getElementById('data_escolhida').value;
+        const horarioEscolhidoRaw = document.getElementById('horario_escolhido').value;
+        
+        // Define se é um agendamento direto ou lista de espera com base na string do horário
+        const isListaEspera = !horarioEscolhidoRaw.includes("LIVRE");
+        
+        // Cria o objeto com os dados da consulta
+        const dadosConsulta = {
+            especialidade: especialidadeNome,
+            medico: medicoNome,
+            data: dataEscolhida,
+            horarioRaw: horarioEscolhidoRaw, // Mantém o valor original enviado ao backend
+            tipo: isListaEspera ? 'Espera' : 'Confirmado',
+            dataRegistro: new Date().toISOString()
+        };
+
+        // Converte o objeto para string JSON e salva no localStorage
+        localStorage.setItem('dadosUltimaConsulta', JSON.stringify(dadosConsulta));
+        
+        // Opcional: Se você quiser visualizar no console antes da página recarregar
+        // console.log("Dados salvos no localStorage:", JSON.parse(localStorage.getItem('dadosUltimaConsulta')));
+    });
 </script>
 
 </body>
