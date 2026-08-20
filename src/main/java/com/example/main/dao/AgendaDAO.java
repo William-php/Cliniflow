@@ -13,7 +13,7 @@ import com.example.main.utils.Conexao;
 
 public class AgendaDAO {
 
-    // Lista todas as agendas cadastradas no sistema unindo com perfis e especialidades
+    // lista as agendas cadastradas unindo com perfis e especialidades
     public static HashSet<AgendaMedico> getTodasAgendas() throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT a.*, u.nome_usuario, u.sobrenome_usuario, e.tipo_especialidade, e.nome_especialidade " +
@@ -56,7 +56,6 @@ public class AgendaDAO {
         return lista;
     }
 
-    // Insere um novo turno de atendimento na tabela
     public static void inserirAgenda(AgendaMedico agenda) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "INSERT INTO agenda_medico (medico, especialidade, data_agenda, hora_inicio, hora_fim, status_agenda) VALUES (?, ?, ?, ?, ?, 'Disponivel')";

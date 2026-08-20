@@ -37,7 +37,6 @@ public class AdminEditarUsuarioController extends HttpServlet {
                 if (usuarioEdit != null) {
                     request.setAttribute("usuarioEdit", usuarioEdit);
                     
-                    // Busca o Perfil associado a este ID de usuário
                     int idPerfil = 0;
                     String tipoPerfil = "";
                     
@@ -54,11 +53,11 @@ public class AdminEditarUsuarioController extends HttpServlet {
                     request.setAttribute("idPerfilEdit", idPerfil);
                     request.setAttribute("tipoPerfilEdit", tipoPerfil);
                     
-                    // Carrega todas as especialidades cadastradas
+                    // carrega todas especialidades cadastradas
                     HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
                     request.setAttribute("listaEspecialidades", todasEsp);
                     
-                    // Carrega as especialidades vinculadas a esse perfil
+                    // carrega especialidades vinculadas a esse perfil
                     if (idPerfil > 0) {
                         List<Integer> vinculadas = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idPerfil);
                         request.setAttribute("especialidadesVinculadas", vinculadas);
@@ -114,7 +113,7 @@ public class AdminEditarUsuarioController extends HttpServlet {
                 
                 UsuarioDAO.putUsuarioById(usuarioAtualizado);
                 
-                // Atualiza as especialidades vinculadas ao perfil do médico
+                // atualiza especialidades vinculadas ao perfil medico
                 String idPerfilParam = request.getParameter("id_perfil");
                 if (idPerfilParam != null && !idPerfilParam.isEmpty() && !"0".equals(idPerfilParam)) {
                     int idPerfil = Integer.parseInt(idPerfilParam);

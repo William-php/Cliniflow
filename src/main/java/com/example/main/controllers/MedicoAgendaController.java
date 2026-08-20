@@ -42,17 +42,15 @@ public class MedicoAgendaController extends HttpServlet {
             int mes = dataSelecionada.getMonthValue();
             int ano = dataSelecionada.getYear();
 
-            // 1. Gera todos os dias do mês atual (Ex: 1 a 31)
             int totalDiasNoMes = dataSelecionada.lengthOfMonth();
             List<LocalDate> todosOsDiasDoMes = new ArrayList<>();
             for (int d = 1; d <= totalDiasNoMes; d++) {
                 todosOsDiasDoMes.add(LocalDate.of(ano, mes, d));
             }
 
-            // 2. Busca quais desses dias têm consultas
+            // busca quais desses dias tem consultas
             List<LocalDate> diasComConsulta = MedicoAgendaDAO.getDiasComConsultaNoMes(idMedico, mes, ano);
 
-            // 3. Consultas da timeline para o dia selecionado
             List<Map<String, Object>> consultasDoDia = MedicoAgendaDAO.getConsultasDoDia(idMedico, dataSelecionada);
 
             request.setAttribute("todosOsDiasDoMes", todosOsDiasDoMes);

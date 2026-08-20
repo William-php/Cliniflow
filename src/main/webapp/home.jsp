@@ -16,7 +16,8 @@
     StringBuilder datasConsultas = new StringBuilder("[");
     if (lista != null && !lista.isEmpty()) {
         for (Consulta c : lista) {
-            if (c.getDataHoraInicioConsulta() != null && "AGENDADA".equalsIgnoreCase(c.getStatusConsulta() != null ? c.getStatusConsulta().name() : "")) {
+            // CORREÇÃO: Adicionado o toUpperCase() para não falhar na leitura do status
+            if (c.getDataHoraInicioConsulta() != null && "AGENDADA".equalsIgnoreCase(c.getStatusConsulta() != null ? c.getStatusConsulta().name().toUpperCase() : "")) {
                 String dataIso = c.getDataHoraInicioConsulta().toString().split("T")[0];
                 datasConsultas.append("'").append(dataIso).append("',");
             }
@@ -366,6 +367,7 @@
     });
 
     window.onload = function() {
+        // CORREÇÃO: Garante que o calendário seja desenhado ao abrir a página
         renderizarCalendario(mesAtual, anoAtual);
         
         // Verifica a URL para criar a notificação automaticamente!

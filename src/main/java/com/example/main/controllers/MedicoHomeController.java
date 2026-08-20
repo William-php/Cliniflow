@@ -30,7 +30,6 @@ public class MedicoHomeController extends HttpServlet {
         try {
             int idMedico = usuarioLogado.getIdPerfil();
 
-            // 1. Busca Próxima Consulta
             Object[] proxConsulta = MedicoDashboardDAO.getProximaConsulta(idMedico);
             if (proxConsulta != null) {
                 request.setAttribute("proxPaciente", (String) proxConsulta[0]);
@@ -42,16 +41,13 @@ public class MedicoHomeController extends HttpServlet {
                 request.setAttribute("proxHorario", "--");
             }
 
-            // 2. Busca Contadores Superiores
             request.setAttribute("consultasDia", MedicoDashboardDAO.getContagemConsultas(idMedico, "DIA"));
             request.setAttribute("consultasMes", MedicoDashboardDAO.getContagemConsultas(idMedico, "MES"));
             request.setAttribute("concluidasMes", MedicoDashboardDAO.getContagemConsultas(idMedico, "CONCLUIDAS"));
 
-            // 3. Busca Arrays para Gráfico e Calendário
             request.setAttribute("datasComAgenda", MedicoDashboardDAO.getDatasComAgendaJSON(idMedico));
             request.setAttribute("dadosGraficoAno", MedicoDashboardDAO.getDadosGraficoAnualJSON(idMedico));
 
-            // Envia para a Tela
             request.getRequestDispatcher("medico-home.jsp").forward(request, response);
 
         } catch (Exception e) {

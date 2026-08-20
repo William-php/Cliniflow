@@ -18,18 +18,14 @@ public class AdminUsuarioController extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HttpSession session = request.getSession();
 		Perfil usuarioLogado = (Perfil) session.getAttribute("usuarioLogado");
-		
-		// Validação de segurança: Só admin acessa
+
 		if (usuarioLogado != null && usuarioLogado.getUsuario() != null && usuarioLogado.getUsuario().isAdmUsuario()) {
 			try {
-				// Captura o ID do Administrador logado
 				int idAdmin = usuarioLogado.getUsuario().getIdUsuario();
 				
-				// Busca os dados reais do banco PASSANDO O ID do admin para ser ignorado na lista
 				java.util.HashSet<Perfil> listaUsuarios = com.example.main.dao.PerfilDAO.getTodosUsuariosComPerfil(idAdmin);
 				request.setAttribute("listaUsuarios", listaUsuarios);
 				
-				// Direciona para a tela
 				request.getRequestDispatcher("admin-usuarios.jsp").forward(request, response);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -52,18 +48,15 @@ public class AdminUsuarioController extends HttpServlet {
 				com.example.main.models.Usuario usuario = com.example.main.dao.UsuarioDAO.getUsuarioById(idUsuario);
 				
 				if (usuario != null) {
-					// Verifica qual foi o botão clicado e atualiza no objeto
 					if ("ATIVO".equals(novoStatusStr)) {
 						usuario.setStatusUsuario(com.example.main.enums.StatusUsuario.ATIVO);
 					} else {
 						usuario.setStatusUsuario(com.example.main.enums.StatusUsuario.DESATIVADO);
 					}
 					
-					// Salva a alteração rápida
 					com.example.main.dao.UsuarioDAO.putUsuarioById(usuario);
 				}
 				
-				// Atualiza a página para o admin ver a mudança
 				response.sendRedirect("admin-usuarios");
 			} catch (Exception e) {
 				e.printStackTrace();

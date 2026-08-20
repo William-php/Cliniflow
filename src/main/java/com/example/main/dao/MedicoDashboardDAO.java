@@ -9,7 +9,6 @@ import com.example.main.utils.Conexao;
 
 public class MedicoDashboardDAO {
 
-    // 1. Busca o próximo paciente agendado para o médico
     public static Object[] getProximaConsulta(int idMedico) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT up.nome_usuario, up.sobrenome_usuario, c.data_hora_consulta_inicio " +
@@ -35,7 +34,6 @@ public class MedicoDashboardDAO {
         return result;
     }
 
-    // 2. Conta os atendimentos do Dia, do Mês ou os Concluídos
     public static int getContagemConsultas(int idMedico, String tipo) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "";
@@ -45,7 +43,6 @@ public class MedicoDashboardDAO {
         } else if ("MES".equals(tipo)) {
             sql = "SELECT COUNT(*) FROM consultas WHERE medico = ? AND MONTH(data_hora_consulta_inicio) = MONTH(CURDATE()) AND YEAR(data_hora_consulta_inicio) = YEAR(CURDATE()) AND status_consulta != 'Cancelada'";
         } else if ("CONCLUIDAS".equals(tipo)) {
-            // SÓ CONTA QUANDO ATENDER!
             sql = "SELECT COUNT(*) FROM consultas WHERE medico = ? AND MONTH(data_hora_consulta_inicio) = MONTH(CURDATE()) AND YEAR(data_hora_consulta_inicio) = YEAR(CURDATE()) AND status_consulta IN ('Realizada', 'Concluida', 'REALIZADA', 'CONCLUIDA')";
         }
 
@@ -59,7 +56,6 @@ public class MedicoDashboardDAO {
         return count;
     }
 
-    // 3. Monta o Array de dias pro Calendário: ['2026-08-20', '2026-08-25']
     public static String getDatasComAgendaJSON(int idMedico) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT DISTINCT DATE(data_hora_consulta_inicio) as data_agenda FROM consultas WHERE medico = ? AND status_consulta = 'AGENDADA'";
@@ -79,11 +75,10 @@ public class MedicoDashboardDAO {
         return json.toString();
     }
 
-    // 4. Monta o Array do Gráfico Anual somando por meses: [10, 15, 20, 0, 5...]
+    // monta o Array do grafico Anual
     public static String getDadosGraficoAnualJSON(int idMedico) throws Exception {
         Connection conexao = Conexao.conectar();
         
-        // MÁGICA REAL: Agora o gráfico SÓ sobe se o status for Realizada ou Concluida!
         String sql = "SELECT MONTH(data_hora_consulta_inicio) as mes, COUNT(*) as qtd " +
                      "FROM consultas " +
                      "WHERE medico = ? AND YEAR(data_hora_consulta_inicio) = YEAR(CURDATE()) " +
@@ -98,7 +93,7 @@ public class MedicoDashboardDAO {
         while (rs.next()) {
             int mes = rs.getInt("mes");
             int qtd = rs.getInt("qtd");
-            meses[mes - 1] = qtd; // O array começa em 0 (Janeiro)
+            meses[mes - 1] = qtd;
         }
         conexao.close();
 

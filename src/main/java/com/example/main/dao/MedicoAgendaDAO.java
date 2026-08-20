@@ -13,8 +13,7 @@ import java.util.Map;
 import com.example.main.utils.Conexao;
 
 public class MedicoAgendaDAO {
-
-    // 1. Busca os próximos dias (até 15 dias) em que o médico tem algum horário cadastrado
+	
     public static List<LocalDate> getDiasComAgenda(int idMedico) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT DISTINCT DATE(data_hora_consulta_inicio) as dia " +
@@ -34,7 +33,7 @@ public class MedicoAgendaDAO {
         return dias;
     }
 
-    // 2. Busca todas as consultas de um dia específico para montar a Timeline
+    // busca as consultas de um dia especifico para montar timeline
     public static List<Map<String, Object>> getConsultasDoDia(int idMedico, LocalDate data) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT c.id_consulta, c.data_hora_consulta_inicio, c.status_consulta, " +
@@ -73,8 +72,7 @@ public class MedicoAgendaDAO {
         conexao.close();
         return lista;
     }
-    
-    // 3. Busca os dias com consulta no mês selecionado (Apenas uma cópia)
+
     public static List<LocalDate> getDiasComConsultaNoMes(int idMedico, int mes, int ano) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT DISTINCT DATE(data_hora_consulta_inicio) as dia " +

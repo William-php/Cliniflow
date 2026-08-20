@@ -105,27 +105,26 @@ public class ConsultaController extends HttpServlet {
 				HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
 				if (todasEsp.size() > 0) {
 					for (Consulta c : consultasPorUsuarioLogado) {
-	                    if (c.getMedicoConsulta() != null) {
-	                        int idMedico = c.getMedicoConsulta().getIdPerfil();
-	                        
-	                        // Se ainda não buscamos a especialidade desse médico, nós buscamos agora
-	                        if (!mapaEspecialidades.containsKey(idMedico)) {
-	                            List<Integer> idsEsp = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idMedico);
-	                            List<String> nomesEsp = new ArrayList<>();
-	                            
-	                            for (Integer id : idsEsp) {
-	                                for (Especialidade e : todasEsp) {
-	                                    if (e.getIdEspecialidade() == id) {
-	                                        nomesEsp.add(e.getTipoEspecialidade().name()); // Pega o TIPO (ex: ORTOPEDIA)
-	                                    }
-	                                }
-	                            }
-	                            
-	                            String textoEsp = nomesEsp.isEmpty() ? "Clínico Geral" : String.join(", ", nomesEsp);
-	                            mapaEspecialidades.put(idMedico, textoEsp);
-	                        }
-	                    }
-	                }
+                        if (c.getMedicoConsulta() != null) {
+                            int idMedico = c.getMedicoConsulta().getIdPerfil();
+                            
+                            if (!mapaEspecialidades.containsKey(idMedico)) {
+                                List<Integer> idsEsp = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idMedico);
+                                List<String> nomesEsp = new ArrayList<>();
+                                
+                                for (Integer id : idsEsp) {
+                                    for (Especialidade e : todasEsp) {
+                                        if (e.getIdEspecialidade() == id) {
+                                            nomesEsp.add(e.getTipoEspecialidade().name());
+                                        }
+                                    }
+                                }
+                                
+                                String textoEsp = nomesEsp.isEmpty() ? "Clínico Geral" : String.join(", ", nomesEsp);
+                                mapaEspecialidades.put(idMedico, textoEsp);
+                            }
+                        }
+                    }
 				}
 				request.setAttribute("mapaEspecialidades", mapaEspecialidades);
 				request.setAttribute("consultasUsuarioLogado", consultasPorUsuarioLogado);

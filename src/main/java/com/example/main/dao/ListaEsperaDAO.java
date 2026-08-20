@@ -10,10 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.main.models.ListaEspera;
-import com.example.main.models.Perfil;
-import com.example.main.models.Usuario;
 import com.example.main.utils.Conexao;
-import com.example.main.utils.Utilidade;
 
 public class ListaEsperaDAO {
 	
@@ -28,8 +25,9 @@ public class ListaEsperaDAO {
 	public static List<Map<String, Object>> getDetalhesFilaPaciente(int idPaciente) throws Exception {
 		Connection conexao = Conexao.conectar();
 		
+		//faz a busca detalhada de todas as listas de espera ativas que o paciente está cadastrado
 		String sql = "SELECT listas_espera.id_lista_espera, listas_espera.posicao_lista_espera, "
-				+ "consultas.data_hora_consulta_inicio, "
+				+ "consultas.data_hora_consulta_inicio, perfis.id_perfil AS medico_id, "
 				+ "usuarios.nome_usuario, usuarios.sobrenome_usuario "
 				+ "FROM listas_espera "
 				+ "JOIN consultas ON consultas.id_consulta = listas_espera.consulta "
@@ -48,6 +46,7 @@ public class ListaEsperaDAO {
 			Map<String, Object> item = new HashMap<>();
 			item.put("idListaEspera", rs.getInt("id_lista_espera"));
 			item.put("posicao", rs.getInt("posicao_lista_espera"));
+			item.put("idMedico", rs.getInt("medico_id")); // Salva o ID do médico
 			item.put("nomeMedico", "Dr(a). " + rs.getString("nome_usuario") + " " + rs.getString("sobrenome_usuario"));
 			
 			java.sql.Timestamp ts = rs.getTimestamp("data_hora_consulta_inicio");
@@ -208,9 +207,6 @@ public class ListaEsperaDAO {
         removerPacienteReordenar(idListaEspera, idConsulta, posicaoAtual);
     }
     
-    // ======================================================================================
-    // NOVO GATILHO: Busca quem é o próximo da fila e promove automaticamente
-    // ======================================================================================
     public static boolean promoverPrimeiroDaFila(int idConsulta) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT id_lista_espera, paciente, posicao_lista_espera FROM listas_espera " +
@@ -234,7 +230,6 @@ public class ListaEsperaDAO {
         stmt.close();
         conexao.close();
         
-        // Se achou alguém esperando na fila para essa consulta, aloca a vaga para ele!
         if (temFila) {
             alocarVagaParaPaciente(idConsulta, idPaciente, idListaEspera, posicaoAtual);
             return true;

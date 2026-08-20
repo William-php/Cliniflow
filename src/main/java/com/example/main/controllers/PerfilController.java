@@ -45,11 +45,9 @@ public class PerfilController extends HttpServlet {
 				try {
 					int idUsuario = usuarioLogado.getUsuario().getIdUsuario();
 					
-					// Inativa o usuário no banco de dados
 					boolean inativado = PerfilDAO.inativarUsuario(idUsuario);
 					
 					if (inativado) {
-						// Destri a sessão e manda para o login
 						session.invalidate();
 						response.sendRedirect("index.jsp?conta=desativada");
 					} else {

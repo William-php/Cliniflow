@@ -16,7 +16,7 @@ import com.example.main.utils.Conexao;
 
 public class AgendamentoDAO {
 
-    // 1. Busca os médicos que têm agenda futura para uma especialidade
+    // busca medicos que tem agenda para uma especialidade
     public static List<Perfil> getMedicosDisponiveisPorEspecialidade(int idEspecialidade) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT DISTINCT p.id_perfil, u.nome_usuario, u.sobrenome_usuario " +
@@ -43,7 +43,6 @@ public class AgendamentoDAO {
         return medicos;
     }
 
-    // 2. Retorna a lista de datas em que o médico atende
     public static List<String> getDatasDisponiveisMedico(int idMedico) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT DISTINCT data_agenda FROM agenda_medico " +
@@ -61,7 +60,6 @@ public class AgendamentoDAO {
         return datas;
     }
 
-    // 3. Busca as faixas de turno (ex: 08:00 as 12:00) de um dia específico
     public static List<AgendaMedico> getTurnosDoDia(int idMedico, LocalDate data) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "SELECT hora_inicio, hora_fim FROM agenda_medico " +
@@ -83,10 +81,8 @@ public class AgendamentoDAO {
         return turnos;
     }
 
-    // 4. CORRIGIDO: Verifica se existe uma consulta ocupando a vaga (IGNORA AS CANCELADAS)
     public static Integer getConsultaExistente(int idMedico, LocalDateTime dataHora) throws Exception {
         Connection conexao = Conexao.conectar();
-        // A MÁGICA AQUI: Filtramos para garantir que a consulta não foi cancelada
         String sql = "SELECT id_consulta FROM consultas " +
                      "WHERE medico = ? AND data_hora_consulta_inicio = ? " +
                      "AND UPPER(status_consulta) != 'CANCELADA'";
@@ -104,7 +100,7 @@ public class AgendamentoDAO {
         return idConsulta;
     }
 
-    // 5. Salva a Consulta (Horário Livre)
+    // salva a consulta
     public static void agendarConsulta(int idPaciente, int idMedico, LocalDateTime inicio) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "INSERT INTO consultas (paciente, medico, data_hora_consulta_inicio, data_hora_consulta_fim, status_consulta) VALUES (?, ?, ?, ?, 'Agendada')";
@@ -117,7 +113,7 @@ public class AgendamentoDAO {
         conexao.close();
     }
 
-    // 6. Entra na Lista de Espera (Horário Ocupado)
+    // entra na lista de espera
     public static void entrarListaEspera(int idPaciente, int idConsultaOcupada) throws Exception {
         Connection conexao = Conexao.conectar();
         String sql = "INSERT INTO listas_espera (consulta, paciente, posicao_lista_espera, status_lista_espera) VALUES (?, ?, 1, 'Aguardando')";

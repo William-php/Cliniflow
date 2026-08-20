@@ -24,18 +24,15 @@ public class LoginController extends HttpServlet {
 			
 			if (usuarioLogado != null && usuarioLogado.getUsuario() != null) {
 				
-				// 1. Bloqueia contas inativas
 				String status = usuarioLogado.getUsuario().getStatusUsuario().name();
 				if ("INATIVO".equalsIgnoreCase(status) || "DESATIVADA".equalsIgnoreCase(status)) {
 					response.sendRedirect(request.getContextPath() + "/index.jsp?erro=conta_inativa");
 					return;
 				}
 				
-				// 2. Salva a sessão ativa
 				HttpSession session = request.getSession();
 				session.setAttribute("usuarioLogado", usuarioLogado);
 				
-				// 3. Roteamento: Primeiro checa a flag de Admin, depois o tipo de perfil
 				if (usuarioLogado.getUsuario().isAdmUsuario()) {
 					response.sendRedirect(request.getContextPath() + "/admin-home");
 				} else if ("MEDICO".equalsIgnoreCase(usuarioLogado.getTipoPerfil().name())) {

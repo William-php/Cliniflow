@@ -1,10 +1,15 @@
 package com.example.main.controllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.example.main.dao.EspecialidadeDAO;
 import com.example.main.dao.ListaEsperaDAO;
+import com.example.main.models.Especialidade;
 import com.example.main.models.Perfil;
 
 import jakarta.servlet.ServletException;
@@ -27,10 +32,8 @@ public class ListaEsperaController extends HttpServlet {
 				Perfil perfil = (Perfil) session.getAttribute("usuarioLogado");
 				
 				if(perfil != null) {
-					// Pega o ID específico vindo do formulário e deleta SÓ ELE
 					int idFila = Integer.parseInt(request.getParameter("id_lista_espera"));
 					boolean sucesso = ListaEsperaDAO.sairDaFila(idFila, perfil.getIdPerfil());
-					
 					response.sendRedirect("minha-lista-espera");
 				} else {
 					response.sendRedirect("index.jsp");
@@ -62,9 +65,33 @@ public class ListaEsperaController extends HttpServlet {
 		if(perfil != null) {
 			int idPerfil = perfil.getIdPerfil();		
 			try {
-				// Usa o novo método inteligente que retorna o Map com as Datas
 				List<Map<String, Object>> filasDetalhadas = ListaEsperaDAO.getDetalhesFilaPaciente(idPerfil);
 				request.setAttribute("filasDetalhadas", filasDetalhadas);
+				
+                HashMap<Integer, String> mapaEspecialidades = new HashMap<>();
+                HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
+                
+                for (Map<String, Object> fila : filasDetalhadas) {
+                    if (fila.get("idMedico") != null) {
+                        int idMedico = (Integer) fila.get("idMedico");
+                        
+                        if (!mapaEspecialidades.containsKey(idMedico)) {
+                            List<Integer> idsEsp = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idMedico);
+                            List<String> nomesEsp = new ArrayList<>();
+                            
+                            for (Integer id : idsEsp) {
+                                for (Especialidade e : todasEsp) {
+                                    if (e.getIdEspecialidade() == id) {
+                                        nomesEsp.add(e.getTipoEspecialidade().name()); 
+                                    }
+                                }
+                            }
+                            String textoEsp = nomesEsp.isEmpty() ? "Clínico Geral" : String.join(", ", nomesEsp);
+                            mapaEspecialidades.put(idMedico, textoEsp);
+                        }
+                    }
+                }
+                request.setAttribute("mapaEspecialidades", mapaEspecialidades);
 				
 				request.getRequestDispatcher("lista-espera.jsp").forward(request, response);
 			} catch (Exception e) {

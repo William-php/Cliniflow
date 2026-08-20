@@ -1,8 +1,13 @@
 package com.example.main.controllers;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
+import com.example.main.dao.ListaEsperaDAO;
 import com.example.main.models.Perfil;
+import com.example.main.utils.Conexao;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,11 +37,36 @@ public class AdminController extends HttpServlet {
 		HttpSession session = request.getSession();
 		Perfil usuarioLogado = (Perfil) session.getAttribute("usuarioLogado");
 		
-		// Aqui depois podemos adicionar uma validação mais forte: 
-		// if (usuarioLogado != null && usuarioLogado.getTipoPerfil() == TipoPerfil.ADMIN)
-		if (usuarioLogado != null) {
+		if (usuarioLogado != null && usuarioLogado.getUsuario() != null && usuarioLogado.getUsuario().isAdmUsuario()) {
 			try {
-				// No futuro, chamaremos os DAOs aqui para popular os cards com totais de pacientes, médicos, etc.
+				int qtdListas = ListaEsperaDAO.getFilasAtivasAdmin().size();
+				request.setAttribute("listasEsperaAtivas", qtdListas);
+				
+				int pacientes = 0;
+				int medicos = 0;
+				int consultasHoje = 0;
+				
+				try (Connection conexao = Conexao.conectar()) {
+					// card total pacientes
+					PreparedStatement ps1 = conexao.prepareStatement("SELECT COUNT(*) FROM perfis WHERE tipo_perfil = 'PACIENTE'");
+					ResultSet rs1 = ps1.executeQuery();
+					if (rs1.next()) pacientes = rs1.getInt(1);
+					
+					// card total medicos
+					PreparedStatement ps2 = conexao.prepareStatement("SELECT COUNT(*) FROM perfis WHERE tipo_perfil = 'MEDICO'");
+					ResultSet rs2 = ps2.executeQuery();
+					if (rs2.next()) medicos = rs2.getInt(1);
+					
+					// card consultas hoje
+					PreparedStatement ps3 = conexao.prepareStatement("SELECT COUNT(*) FROM consultas WHERE DATE(data_hora_consulta_inicio) = CURDATE() AND UPPER(status_consulta) != 'CANCELADA'");
+					ResultSet rs3 = ps3.executeQuery();
+					if (rs3.next()) consultasHoje = rs3.getInt(1);
+				}
+				
+				request.setAttribute("totalPacientes", pacientes);
+				request.setAttribute("totalMedicos", medicos);
+				request.setAttribute("consultasHoje", consultasHoje);
+
 				request.getRequestDispatcher("admin-home.jsp").forward(request, response);
 			} catch (Exception e) {
 				e.printStackTrace();

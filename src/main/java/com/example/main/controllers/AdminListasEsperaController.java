@@ -36,7 +36,6 @@ public class AdminListasEsperaController extends HttpServlet {
         String acao = request.getParameter("acao");
         
         try {
-            // Se for requisição AJAX para carregar os pacientes dentro do Modal
             if ("buscar_pacientes".equals(acao)) {
                 int idConsulta = Integer.parseInt(request.getParameter("id_consulta"));
                 List<Map<String, Object>> pacientes = ListaEsperaDAO.getPacientesFilaAdmin(idConsulta);
@@ -53,7 +52,7 @@ public class AdminListasEsperaController extends HttpServlet {
                         int idPac = (Integer) p.get("idPaciente");
                         String nomePac = (String) p.get("nomePaciente");
                         
-                        // Gera o HTML da linha do paciente com o Botão de Alocar Vaga (Verde) e Remover (Lixeira)
+                        // HTML do paciente com o Botão de Alocar Vaga e Remover
                         out.println("<div class='fila-patient-item'>");
                         out.println("   <div class='fpi-info'>");
                         out.println("       <span class='fpi-pos'>" + pos + "º</span>");
@@ -82,11 +81,10 @@ public class AdminListasEsperaController extends HttpServlet {
                 return;
             }
 
-            // Fluxo Normal (Carregar a tela)
             List<Map<String, Object>> filas = ListaEsperaDAO.getFilasAtivasAdmin();
             request.setAttribute("filas", filas);
             
-            // Mapeia a Especialidade Real dos Médicos
+            // mapeia especialidade do medicos
             HashMap<Integer, String> mapaEspecialidades = new HashMap<>();
             HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
             

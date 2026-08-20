@@ -128,27 +128,58 @@ public class ConsultaDAO {
 	
 	public static boolean cancelarConsulta(int idConsulta) throws Exception {
 		Connection conexao = Conexao.conectar();
-		boolean atualizou = false;
 		
+		//antes de cancelar, o sistema "guarda" quem era o dono da consulta
+		String sqlSelect = "SELECT paciente, medico, data_hora_consulta_inicio, data_hora_consulta_fim FROM consultas WHERE id_consulta = ?";
+		PreparedStatement stmtSel = conexao.prepareStatement(sqlSelect);
+		stmtSel.setInt(1, idConsulta);
+		ResultSet rs = stmtSel.executeQuery();
+		
+		int pacienteOriginal = 0;
+		int medico = 0;
+		java.sql.Timestamp inicio = null;
+		java.sql.Timestamp fim = null;
+		
+		if (rs.next()) {
+			pacienteOriginal = rs.getInt("paciente");
+			medico = rs.getInt("medico");
+			inicio = rs.getTimestamp("data_hora_consulta_inicio");
+			fim = rs.getTimestamp("data_hora_consulta_fim");
+		}
+		stmtSel.close();
+
 		String sql = "UPDATE consultas SET status_consulta = 'Cancelada' WHERE id_consulta = ?";
 		PreparedStatement stmt = conexao.prepareStatement(sql);
 		stmt.setInt(1, idConsulta);
-		
 		int linhasAfetadas = stmt.executeUpdate();
-		conexao.close();
+		stmt.close();
 		
+		boolean atualizou = false;
 		if (linhasAfetadas > 0) {
 			atualizou = true;
-			// GATILHO DA FILA: Se cancelou com sucesso, chama a fila para promover o 1º da vez!
-			ListaEsperaDAO.promoverPrimeiroDaFila(idConsulta);
+			boolean filaAndou = ListaEsperaDAO.promoverPrimeiroDaFila(idConsulta);
+			
+			// para o pacienteOriginal nao perder o histórico, uma copia da cancelada
+			if (filaAndou && pacienteOriginal > 0) {
+				String sqlClone = "INSERT INTO consultas (paciente, medico, data_hora_consulta_inicio, data_hora_consulta_fim, status_consulta) VALUES (?, ?, ?, ?, 'Cancelada')";
+				PreparedStatement stmtClone = conexao.prepareStatement(sqlClone);
+				stmtClone.setInt(1, pacienteOriginal);
+				stmtClone.setInt(2, medico);
+				stmtClone.setTimestamp(3, inicio);
+				stmtClone.setTimestamp(4, fim);
+				stmtClone.executeUpdate();
+				stmtClone.close();
+			}
 		}
 		
+		conexao.close();
 		return atualizou;
 	}
-
+	
 	public static java.util.HashSet<com.example.main.models.Consulta> getTodasConsultasAdmin() throws Exception {
         java.sql.Connection conexao = com.example.main.utils.Conexao.conectar();
         
+        //trazer os dados da tabela de consultas cruzando as informações com as tabelas de perfis e usuários
         String sql = "SELECT c.*, " +
                      "pp.id_perfil AS pac_id_perfil, up.nome_usuario AS pac_nome, up.sobrenome_usuario AS pac_sobrenome, " +
                      "pm.id_perfil AS med_id_perfil, um.nome_usuario AS med_nome, um.sobrenome_usuario AS med_sobrenome " +
@@ -201,18 +232,48 @@ public class ConsultaDAO {
 
     public static boolean atualizarStatusConsulta(int idConsulta, String novoStatus) throws Exception {
         java.sql.Connection conexao = com.example.main.utils.Conexao.conectar();
+        
+        int pacienteOriginal = 0, medico = 0;
+        java.sql.Timestamp inicio = null, fim = null;
+        
+        if ("Cancelada".equalsIgnoreCase(novoStatus)) {
+            String sqlSelect = "SELECT paciente, medico, data_hora_consulta_inicio, data_hora_consulta_fim FROM consultas WHERE id_consulta = ?";
+            java.sql.PreparedStatement stmtSel = conexao.prepareStatement(sqlSelect);
+            stmtSel.setInt(1, idConsulta);
+            java.sql.ResultSet rs = stmtSel.executeQuery();
+            if (rs.next()) {
+                pacienteOriginal = rs.getInt("paciente");
+                medico = rs.getInt("medico");
+                inicio = rs.getTimestamp("data_hora_consulta_inicio");
+                fim = rs.getTimestamp("data_hora_consulta_fim");
+            }
+            stmtSel.close();
+        }
+
         String sql = "UPDATE consultas SET status_consulta = ? WHERE id_consulta = ?";
         java.sql.PreparedStatement stmt = conexao.prepareStatement(sql);
         stmt.setString(1, novoStatus);
         stmt.setInt(2, idConsulta);
         int linhas = stmt.executeUpdate();
-        conexao.close();
+        stmt.close();
         
-        // GATILHO DA FILA: Se o médico alterou o status para 'Cancelada' (Faltou)
+        // gatilho Clone para o paciente nao perder a consulta faltada no historico
         if (linhas > 0 && "Cancelada".equalsIgnoreCase(novoStatus)) {
-            ListaEsperaDAO.promoverPrimeiroDaFila(idConsulta);
+            boolean filaAndou = ListaEsperaDAO.promoverPrimeiroDaFila(idConsulta);
+            
+            if (filaAndou && pacienteOriginal > 0) {
+                String sqlClone = "INSERT INTO consultas (paciente, medico, data_hora_consulta_inicio, data_hora_consulta_fim, status_consulta) VALUES (?, ?, ?, ?, 'Cancelada')";
+                java.sql.PreparedStatement stmtClone = conexao.prepareStatement(sqlClone);
+                stmtClone.setInt(1, pacienteOriginal);
+                stmtClone.setInt(2, medico);
+                stmtClone.setTimestamp(3, inicio);
+                stmtClone.setTimestamp(4, fim);
+                stmtClone.executeUpdate();
+                stmtClone.close();
+            }
         }
         
+        conexao.close();
         return linhas > 0;
     }
 }

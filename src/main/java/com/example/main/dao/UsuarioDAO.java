@@ -18,11 +18,10 @@ import com.example.main.utils.Utilidade;
 public class UsuarioDAO {
 	
 	public static ArrayList<Usuario> getUsuarios() throws Exception {
-		Connection conexao = Conexao.conectar(); //se repete muito
-		
+		Connection conexao = Conexao.conectar();		
 		String sql = "SELECT * FROM usuarios";
 		
-		PreparedStatement statement = conexao.prepareStatement(sql); //se repete muito
+		PreparedStatement statement = conexao.prepareStatement(sql);
 		ResultSet rs = statement.executeQuery();
 		
 		ArrayList<Usuario> listaUsuarios = new ArrayList<Usuario>();
@@ -53,7 +52,6 @@ public class UsuarioDAO {
 		return usuario;
 	}
 	
-	//Retornar dados do usuário no login
 	public static Usuario getUsuarioByEmailAndSenha(String emailUsuario, String senhaUsuario) throws Exception {
 		Connection conexao = Conexao.conectar();
 		String sql = "SELECT * FROM usuarios JOIN  WHERE email_usuario = ? AND senha_usuario = ?";

@@ -29,11 +29,10 @@ public class AdminConsultasController extends HttpServlet {
         
         if (adminLogado != null && adminLogado.getUsuario() != null && adminLogado.getUsuario().isAdmUsuario()) {
             try {
-                // Busca todas as consultas
                 HashSet<Consulta> listaConsultas = ConsultaDAO.getTodasConsultasAdmin();
                 request.setAttribute("listaConsultas", listaConsultas);
                 
-                // MÁGICA AQUI: Busca as especialidades reais dos médicos e cria um mapa
+                // busca especialidades dos medicos e cria um mapa
                 HashMap<Integer, String> mapaEspecialidades = new HashMap<>();
                 HashSet<Especialidade> todasEsp = EspecialidadeDAO.getEspecialidades();
                 
@@ -41,7 +40,6 @@ public class AdminConsultasController extends HttpServlet {
                     if (c.getMedicoConsulta() != null) {
                         int idMedico = c.getMedicoConsulta().getIdPerfil();
                         
-                        // Se ainda não buscamos a especialidade desse médico, nós buscamos agora
                         if (!mapaEspecialidades.containsKey(idMedico)) {
                             List<Integer> idsEsp = EspecialidadeDAO.getIdsEspecialidadesDoMedico(idMedico);
                             List<String> nomesEsp = new ArrayList<>();
@@ -60,7 +58,6 @@ public class AdminConsultasController extends HttpServlet {
                     }
                 }
                 
-                // Envia o mapa de especialidades para o HTML
                 request.setAttribute("mapaEspecialidades", mapaEspecialidades);
                 
                 request.getRequestDispatcher("admin-consultas.jsp").forward(request, response);

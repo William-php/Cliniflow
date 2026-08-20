@@ -16,16 +16,15 @@
     // Leitura do parâmetro de feedback de atualização
     String atualizado = request.getParameter("atualizado");
 
-    // Valores dinâmicos vindos do Controller (com fallback seguro para 0)
     Integer totalPacientes = (Integer) request.getAttribute("totalPacientes");
     Integer totalMedicos = (Integer) request.getAttribute("totalMedicos");
     Integer consultasHoje = (Integer) request.getAttribute("consultasHoje");
     Integer listasEsperaAtivas = (Integer) request.getAttribute("listasEsperaAtivas");
 
-    int qtdPacientes = totalPacientes != null ? totalPacientes : 4;
-    int qtdMedicos = totalMedicos != null ? totalMedicos : 2;
+    int qtdPacientes = totalPacientes != null ? totalPacientes : 0;
+    int qtdMedicos = totalMedicos != null ? totalMedicos : 0;
     int qtdConsultasHoje = consultasHoje != null ? consultasHoje : 0;
-    int qtdListasEspera = listasEsperaAtivas != null ? listasEsperaAtivas : 2;
+    int qtdListasEspera = listasEsperaAtivas != null ? listasEsperaAtivas : 0;
 %>
 
 <!DOCTYPE html>

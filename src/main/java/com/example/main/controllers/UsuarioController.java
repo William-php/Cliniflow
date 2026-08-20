@@ -24,7 +24,6 @@ public class UsuarioController extends HttpServlet {
 		boolean sucesso = atualizarUsuario(request, response);
 		
 		if (sucesso) {
-			// Redirecionamento dinâmico baseado no tipo de usuário
 			if (perfil != null && perfil.getUsuario() != null && perfil.getUsuario().isAdmUsuario()) {
 				response.sendRedirect("admin-home?atualizado=true");
 			} else {
@@ -42,12 +41,12 @@ public class UsuarioController extends HttpServlet {
 		try {
 			Usuario usuarioAtualizado = removerUsuarioPerfil(perfil);
 			
-			// Dados comuns a todos os perfis
+			// dados comuns a todos os perfis
 			usuarioAtualizado.setNomeUsuario(request.getParameter("nome_usuario"));
 			usuarioAtualizado.setSobrenomeUsuario(request.getParameter("sobrenome_usuario"));
 			usuarioAtualizado.setEmailUsuario(request.getParameter("email_usuario"));
 			
-			// Dados editáveis exclusivamente pelo Administrador
+			// dados editáveis so pelo Adm
 			String cpf = request.getParameter("cpf_usuario");
 			if (cpf != null && !cpf.trim().isEmpty()) {
 				usuarioAtualizado.setCpfUsuario(cpf);

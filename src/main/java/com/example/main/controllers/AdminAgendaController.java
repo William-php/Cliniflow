@@ -31,11 +31,10 @@ public class AdminAgendaController extends HttpServlet {
         
         if (usuarioLogado != null && usuarioLogado.getUsuario() != null && usuarioLogado.getUsuario().isAdmUsuario()) {
             try {
-                // 1. Carrega todas as agendas
                 HashSet<AgendaMedico> listaAgendas = AgendaDAO.getTodasAgendas();
                 request.setAttribute("listaAgendas", listaAgendas);
                 
-                // 2. Carrega todos os Médicos e Especialidades para o Modal
+                // carrega todos os medicos e especialidades para o modal
                 List<Perfil> listaMedicos = new ArrayList<>();
                 try (java.sql.Connection conn = Conexao.conectar();
                      java.sql.PreparedStatement stmt = conn.prepareStatement(
